@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Snoopy Workplace",
+    "slug": "snoopy-workplace",
+    "scheme": "snoopyworkplace",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#fffefb",
+      "resizeMode": "contain",
+      "image": "./public/icons/icon-512.png"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.snoopy.workplace"
+    },
+    "android": {
+      "package": "com.snoopy.workplace",
+      "adaptiveIcon": {
+        "foregroundImage": "./public/icons/icon-maskable-512.png",
+        "backgroundColor": "#fffefb"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Snoopy Workplace uses your photos so you can attach a certificate you already have.",
+          "cameraPermission": "Snoopy Workplace uses the camera so you can photograph a certificate on the spot."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#8f3a2a"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./public/favicon.png"
+    },
+    "icon": "./public/icons/icon-512.png"
+  }
+}

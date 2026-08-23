@@ -1,0 +1,359 @@
+{
+  "communities": {
+    "0": [
+      "app_expo_plugins",
+      "expo",
+      "expo_asset",
+      "expo_constants",
+      "expo_document_picker",
+      "expo_file_system",
+      "expo_linking",
+      "expo_metro_runtime",
+      "expo_router",
+      "expo_status_bar",
+      "package_dependencies",
+      "package_dependencies_expo",
+      "package_dependencies_expo_asset",
+      "package_dependencies_expo_constants",
+      "package_dependencies_expo_document_picker",
+      "package_dependencies_expo_file_system",
+      "package_dependencies_expo_linking",
+      "package_dependencies_expo_metro_runtime",
+      "package_dependencies_expo_router",
+      "package_dependencies_expo_status_bar",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_react_native",
+      "package_dependencies_react_native_async_storage_async_storage",
+      "package_dependencies_react_native_safe_area_context",
+      "package_dependencies_react_native_screens",
+      "package_dependencies_react_native_svg",
+      "package_dependencies_react_native_url_polyfill",
+      "package_dependencies_react_native_web",
+      "package_dependencies_snoopy_shared",
+      "package_dependencies_supabase_supabase_js",
+      "package_dependencies_zod",
+      "react",
+      "react_dom",
+      "react_native",
+      "react_native_async_storage_async_storage",
+      "react_native_safe_area_context",
+      "react_native_screens",
+      "react_native_svg",
+      "react_native_url_polyfill",
+      "react_native_web",
+      "snoopy_shared",
+      "supabase_supabase_js",
+      "zod"
+    ],
+    "1": [
+      "app_courses_id",
+      "app_courses_id_coursedetailscreen",
+      "app_courses_id_makestyles",
+      "app_courses_id_steps",
+      "app_events_id",
+      "app_events_id_detail",
+      "app_events_id_eventdetailscreen",
+      "app_events_id_makestyles",
+      "app_events_id_responses",
+      "app_onboarding",
+      "app_onboarding_makestyles",
+      "app_onboarding_onboardingscreen",
+      "app_tabs_index",
+      "app_tabs_index_homescreen",
+      "app_tabs_index_makestyles",
+      "app_tabs_index_metric",
+      "app_tasks_id",
+      "app_tasks_id_choices",
+      "app_tasks_id_detail",
+      "app_tasks_id_makestyles",
+      "app_tasks_id_taskdetailscreen",
+      "src_components_ui",
+      "src_components_ui_avatar",
+      "src_components_ui_badge",
+      "src_components_ui_button",
+      "src_components_ui_card",
+      "src_components_ui_emptystate",
+      "src_components_ui_errornotice",
+      "src_components_ui_listskeleton",
+      "src_components_ui_makestyles",
+      "src_components_ui_progress",
+      "src_components_ui_restrictednotice",
+      "src_components_ui_row",
+      "src_components_ui_sectiontitle",
+      "src_components_ui_skeleton",
+      "src_components_ui_stattile",
+      "src_components_ui_successnotice",
+      "src_theme_index_tap_target",
+      "src_theme_index_tonefor",
+      "src_theme_index_usestyles",
+      "src_theme_index_usetheme"
+    ],
+    "2": [
+      "app_documents",
+      "app_documents_documentsscreen",
+      "app_documents_makestyles",
+      "app_documents_scope_label",
+      "app_documents_scopes",
+      "app_tabs_courses",
+      "app_tabs_courses_coursesscreen",
+      "app_tabs_courses_filters",
+      "app_tabs_courses_makestyles",
+      "app_tabs_events",
+      "app_tabs_events_daykey",
+      "app_tabs_events_eventsscreen",
+      "app_tabs_events_eventsview",
+      "app_tabs_events_makestyles",
+      "app_tabs_events_views",
+      "app_tabs_tasks",
+      "app_tabs_tasks_filters",
+      "app_tabs_tasks_makestyles",
+      "app_tabs_tasks_tasksscreen",
+      "src_lib_auth",
+      "src_lib_auth_authcontext",
+      "src_lib_auth_authstate",
+      "src_lib_auth_useauth",
+      "src_lib_auth_useprofile",
+      "src_lib_supabase",
+      "src_lib_supabase_resolvesupabaseurl",
+      "src_lib_supabase_supabase",
+      "src_lib_useload",
+      "src_lib_useload_useload",
+      "src_theme_index_radius"
+    ],
+    "3": [
+      "app",
+      "app_android_package",
+      "app_experiments_typedroutes",
+      "app_expo",
+      "app_expo_android",
+      "app_expo_experiments",
+      "app_expo_ios",
+      "app_expo_name",
+      "app_expo_newarchenabled",
+      "app_expo_orientation",
+      "app_expo_scheme",
+      "app_expo_slug",
+      "app_expo_splash",
+      "app_expo_userinterfacestyle",
+      "app_expo_version",
+      "app_expo_web",
+      "app_ios_bundleidentifier",
+      "app_ios_supportstablet",
+      "app_splash_backgroundcolor",
+      "app_splash_resizemode",
+      "app_web_bundler",
+      "app_web_output"
+    ],
+    "4": [
+      "app_layout",
+      "app_layout_gate",
+      "app_layout_rootlayout",
+      "app_layout_themedstatusbar",
+      "app_layout_useignorewalletextensionerrors",
+      "app_layout_usewebviewportheight",
+      "src_lib_auth_authprovider",
+      "src_theme_index",
+      "src_theme_index_dark",
+      "src_theme_index_light",
+      "src_theme_index_themechoice",
+      "src_theme_index_themecontext",
+      "src_theme_index_themeprovider",
+      "src_theme_index_themevalue",
+      "src_theme_index_typescale"
+    ],
+    "5": [
+      "app_tabs_layout",
+      "app_tabs_layout_styles",
+      "app_tabs_layout_tabs",
+      "app_tabs_layout_tabslayout",
+      "app_tabs_me",
+      "app_tabs_me_detail",
+      "app_tabs_me_makestyles",
+      "app_tabs_me_mescreen",
+      "app_tabs_me_metric",
+      "src_components_icon",
+      "src_components_icon_icon",
+      "src_components_icon_iconname",
+      "src_lib_auth_platform",
+      "src_lib_usebottominset",
+      "src_lib_usebottominset_usebottominset"
+    ],
+    "6": [
+      "package",
+      "package_devdependencies",
+      "package_devdependencies_types_react",
+      "package_devdependencies_typescript",
+      "package_main",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_android",
+      "package_scripts_ios",
+      "package_scripts_start",
+      "package_scripts_typecheck",
+      "package_version",
+      "types_react",
+      "typescript"
+    ],
+    "7": [
+      "app_auth_login",
+      "app_auth_login_demo",
+      "app_auth_login_loginscreen",
+      "app_auth_login_makestyles",
+      "src_components_monthcalendar",
+      "src_components_monthcalendar_daykey",
+      "src_components_monthcalendar_makestyles",
+      "src_components_monthcalendar_monthcalendar",
+      "src_components_monthcalendar_monthgrid",
+      "src_components_monthcalendar_weekdays",
+      "src_components_snoopy",
+      "src_components_snoopy_snoopymark",
+      "src_theme_index_colors",
+      "src_theme_index_spacing"
+    ],
+    "8": [
+      "ref_expo_tsconfig_base",
+      "ref_ts",
+      "ref_tsx",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_paths",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_extends",
+      "tsconfig_include"
+    ],
+    "9": [
+      "metro_config",
+      "metro_config_config",
+      "metro_config_getdefaultconfig",
+      "metro_config_path",
+      "metro_config_workspaceroot"
+    ]
+  },
+  "cohesion": {
+    "0": 0.046511627906976744,
+    "1": 0.19390243902439025,
+    "2": 0.1471264367816092,
+    "3": 0.09090909090909091,
+    "4": 0.17142857142857143,
+    "5": 0.20952380952380953,
+    "6": 0.13333333333333333,
+    "7": 0.2087912087912088,
+    "8": 0.2222222222222222,
+    "9": 0.4
+  },
+  "gods": [
+    {
+      "id": "src_theme_index_usestyles",
+      "label": "useStyles()",
+      "degree": 44
+    },
+    {
+      "id": "src_theme_index_usetheme",
+      "label": "useTheme()",
+      "degree": 38
+    },
+    {
+      "id": "src_lib_auth_useauth",
+      "label": "useAuth()",
+      "degree": 22
+    },
+    {
+      "id": "src_lib_useload_useload",
+      "label": "useLoad()",
+      "degree": 20
+    },
+    {
+      "id": "src_components_ui_badge",
+      "label": "Badge()",
+      "degree": 15
+    },
+    {
+      "id": "src_components_ui_makestyles",
+      "label": "makeStyles()",
+      "degree": 15
+    },
+    {
+      "id": "app_expo",
+      "label": "expo",
+      "degree": 14
+    },
+    {
+      "id": "src_components_ui_errornotice",
+      "label": "ErrorNotice()",
+      "degree": 14
+    },
+    {
+      "id": "src_theme_index_colors",
+      "label": "Colors",
+      "degree": 14
+    },
+    {
+      "id": "src_theme_index_spacing",
+      "label": "spacing",
+      "degree": 14
+    }
+  ],
+  "surprises": [
+    {
+      "source": "LoginScreen()",
+      "target": "useStyles()",
+      "source_files": [
+        "app/(auth)/login.tsx",
+        "src/theme/index.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "LoginScreen()",
+      "target": "useTheme()",
+      "source_files": [
+        "app/(auth)/login.tsx",
+        "src/theme/index.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "CoursesScreen()",
+      "target": "useStyles()",
+      "source_files": [
+        "app/(tabs)/courses.tsx",
+        "src/theme/index.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "CoursesScreen()",
+      "target": "useTheme()",
+      "source_files": [
+        "app/(tabs)/courses.tsx",
+        "src/theme/index.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "HomeScreen()",
+      "target": "useAuth()",
+      "source_files": [
+        "app/(tabs)/index.tsx",
+        "src/lib/auth.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

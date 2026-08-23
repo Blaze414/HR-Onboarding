@@ -1,0 +1,132 @@
+{
+  "app.json": {
+    "mtime": 1787033998.7109344,
+    "ast_hash": "6b782fed5c3766c17cb23f5d9a1a8cf9",
+    "semantic_hash": "6b782fed5c3766c17cb23f5d9a1a8cf9"
+  },
+  "app/(auth)/login.tsx": {
+    "mtime": 1787028912.87393,
+    "ast_hash": "878d746f3bfd76116e67c75e7f8790ab",
+    "semantic_hash": "878d746f3bfd76116e67c75e7f8790ab"
+  },
+  "app/(tabs)/_layout.tsx": {
+    "mtime": 1787056927.641534,
+    "ast_hash": "14e1465116eec50b0cc90b03c23341e1",
+    "semantic_hash": "14e1465116eec50b0cc90b03c23341e1"
+  },
+  "app/(tabs)/courses.tsx": {
+    "mtime": 1787028912.875822,
+    "ast_hash": "081fff47a14502e0eeb7f2cdc850a69c",
+    "semantic_hash": "081fff47a14502e0eeb7f2cdc850a69c"
+  },
+  "app/(tabs)/events.tsx": {
+    "mtime": 1787057416.7533376,
+    "ast_hash": "ccab598e5bc2874fe291075781ccd2d1",
+    "semantic_hash": "ccab598e5bc2874fe291075781ccd2d1"
+  },
+  "app/(tabs)/index.tsx": {
+    "mtime": 1787028950.61252,
+    "ast_hash": "56e608612900f76bb5e12c7b7536477f",
+    "semantic_hash": "56e608612900f76bb5e12c7b7536477f"
+  },
+  "app/(tabs)/me.tsx": {
+    "mtime": 1787028950.6127417,
+    "ast_hash": "b5537e8ee6a155602122301a0c90c0db",
+    "semantic_hash": "b5537e8ee6a155602122301a0c90c0db"
+  },
+  "app/(tabs)/tasks.tsx": {
+    "mtime": 1787028912.8763201,
+    "ast_hash": "a274a2389f118ad0bc4fb06a0a39b4e4",
+    "semantic_hash": "a274a2389f118ad0bc4fb06a0a39b4e4"
+  },
+  "app/_layout.tsx": {
+    "mtime": 1787057042.0322049,
+    "ast_hash": "c7a7af37a0b5cab2dfd47b5d111d47db",
+    "semantic_hash": "c7a7af37a0b5cab2dfd47b5d111d47db"
+  },
+  "app/courses/[id].tsx": {
+    "mtime": 1787028912.8776062,
+    "ast_hash": "b6594fc35c8edd46d862b5cccf7dbe9c",
+    "semantic_hash": "b6594fc35c8edd46d862b5cccf7dbe9c"
+  },
+  "app/documents.tsx": {
+    "mtime": 1787028912.8787344,
+    "ast_hash": "64b0887d50051f458db73880a093833b",
+    "semantic_hash": "64b0887d50051f458db73880a093833b"
+  },
+  "app/events/[id].tsx": {
+    "mtime": 1787028912.8783586,
+    "ast_hash": "f55cce752eebebb67f3c2797e72a3338",
+    "semantic_hash": "f55cce752eebebb67f3c2797e72a3338"
+  },
+  "app/onboarding.tsx": {
+    "mtime": 1787028912.8791442,
+    "ast_hash": "7c212497df826e38ebb760053fd83312",
+    "semantic_hash": "7c212497df826e38ebb760053fd83312"
+  },
+  "app/tasks/[id].tsx": {
+    "mtime": 1787028912.8779886,
+    "ast_hash": "fd5c3926c4c8d49cef5aaba868421b02",
+    "semantic_hash": "fd5c3926c4c8d49cef5aaba868421b02"
+  },
+  "metro.config.js": {
+    "mtime": 1787031415.2213857,
+    "ast_hash": "299624f8bf5910044048ea4c8fb04dcd",
+    "semantic_hash": "299624f8bf5910044048ea4c8fb04dcd"
+  },
+  "package.json": {
+    "mtime": 1787033966.848651,
+    "ast_hash": "71056d5f62dd345fbfaacb3f15162cd5",
+    "semantic_hash": "71056d5f62dd345fbfaacb3f15162cd5"
+  },
+  "src/components/Icon.tsx": {
+    "mtime": 1787028898.270864,
+    "ast_hash": "d8cbcf40d398ed134f80e64d8203c594",
+    "semantic_hash": "d8cbcf40d398ed134f80e64d8203c594"
+  },
+  "src/components/Snoopy.tsx": {
+    "mtime": 1787027440.2767806,
+    "ast_hash": "ee1c368833408c204ecc46953ff2243a",
+    "semantic_hash": "ee1c368833408c204ecc46953ff2243a"
+  },
+  "src/components/ui.tsx": {
+    "mtime": 1787028885.0302699,
+    "ast_hash": "f9f349696de39c9571f099531f0af04a",
+    "semantic_hash": "f9f349696de39c9571f099531f0af04a"
+  },
+  "src/lib/auth.tsx": {
+    "mtime": 1787027343.3151782,
+    "ast_hash": "8690dd94ab658f0041570eef7c5b217f",
+    "semantic_hash": "8690dd94ab658f0041570eef7c5b217f"
+  },
+  "src/lib/supabase.ts": {
+    "mtime": 1787034301.4075391,
+    "ast_hash": "b5f174858391f23ffbdec6eff84d6d84",
+    "semantic_hash": "b5f174858391f23ffbdec6eff84d6d84"
+  },
+  "src/lib/useLoad.ts": {
+    "mtime": 1787027478.056494,
+    "ast_hash": "f9212c31f3597f8fd5a6388f0a9b74d1",
+    "semantic_hash": "f9212c31f3597f8fd5a6388f0a9b74d1"
+  },
+  "src/theme/index.tsx": {
+    "mtime": 1787028863.999601,
+    "ast_hash": "e3a50851fe52ea88f3fd51f44e2a74af",
+    "semantic_hash": "e3a50851fe52ea88f3fd51f44e2a74af"
+  },
+  "tsconfig.json": {
+    "mtime": 1787033818.3238518,
+    "ast_hash": "a43720bee486e2dcc7f5f211253f8dbb",
+    "semantic_hash": "a43720bee486e2dcc7f5f211253f8dbb"
+  },
+  "src/components/MonthCalendar.tsx": {
+    "mtime": 1787057081.8899424,
+    "ast_hash": "f39181afab5039ccc016795c832bc07e",
+    "semantic_hash": "f39181afab5039ccc016795c832bc07e"
+  },
+  "src/lib/useBottomInset.ts": {
+    "mtime": 1787056725.7290354,
+    "ast_hash": "1b7ff2b64f03ddda793a1a8535361607",
+    "semantic_hash": "1b7ff2b64f03ddda793a1a8535361607"
+  }
+}

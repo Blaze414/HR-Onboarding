@@ -1,0 +1,1366 @@
+/* Snoopy Workplace — desktop design system.
+ *
+ * World: "panel and newsprint". The subject is a comic-strip studio, so the
+ * surfaces borrow from newsprint rather than from dashboard chrome: a warm
+ * paper ground, ink-drawn panel borders, one spot red carried over from strip
+ * printing, and a serif that behaves like a caption face.
+ *
+ * Elevation is declared once per surface: panels carry a border and no shadow,
+ * overlays carry a shadow and no border.
+ */
+
+@font-face {
+  font-family: 'Fraunces';
+  src: url('/fonts/fraunces-latin.woff2') format('woff2');
+  font-weight: 300 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/instrument-sans-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+:root {
+  color-scheme: light;
+
+  /* newsprint ground → paper surface → panel rail */
+  --bg:            #f1eee6;
+  --surface:       #fffefb;
+  --surface-muted: #f8f6ef;
+  --rail:          #e0dbcd;
+  --rail-strong:   #c9c2ae;
+
+  --ink:        #16150f;
+  --ink-muted:  #5c584c;
+  --ink-subtle: #857f70;
+
+  --accent:      #b23a2e;
+  --accent-ink:  #8a2c22;
+  --accent-soft: #f8e7e2;
+
+  --ok:        #3a6f4b;
+  --ok-soft:   #e6efe6;
+  --warn:      #8a5a12;
+  --warn-soft: #f8eeda;
+  --info:      #2c5679;
+  --info-soft: #e6eef4;
+
+  --on-accent: #fffefb;
+
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+
+  /* Overlays only. Panels never take a shadow. */
+  --shadow-overlay: 0 18px 44px -12px rgba(22, 21, 15, 0.28);
+
+  --sidebar-w: 244px;
+  --topbar-h:  60px;
+
+  --sans: 'Instrument Sans', ui-sans-serif, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --fast: 140ms;
+  --base: 200ms;
+}
+
+/*
+ * Dark mode keeps the same world: the paper simply becomes late-edition
+ * newsprint under lamplight. Only the palette is redefined — every structural
+ * token above still applies, and the ink red is lifted so it clears contrast
+ * against a dark ground.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg:            #14120e;
+    --surface:       #1c1a15;
+    --surface-muted: #23201a;
+    --rail:          #322e26;
+    --rail-strong:   #4a453a;
+
+    --ink:        #f3efe4;
+    --ink-muted:  #b3ac9c;
+    --ink-subtle: #8b8474;
+
+    --accent:      #d9614f;
+    --accent-ink:  #f0a396;
+    --accent-soft: #3a231e;
+
+    --ok:        #7cbb8f;
+    --ok-soft:   #1f2d23;
+    --warn:      #d9a45c;
+    --warn-soft: #322616;
+    --info:      #85b2d8;
+    --info-soft: #1a2733;
+
+    --on-accent: #16130f;
+
+    --shadow-overlay: 0 18px 44px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:            #14120e;
+  --surface:       #1c1a15;
+  --surface-muted: #23201a;
+  --rail:          #322e26;
+  --rail-strong:   #4a453a;
+
+  --ink:        #f3efe4;
+  --ink-muted:  #b3ac9c;
+  --ink-subtle: #8b8474;
+
+  --accent:      #d9614f;
+  --accent-ink:  #f0a396;
+  --accent-soft: #3a231e;
+
+  --ok:        #7cbb8f;
+  --ok-soft:   #1f2d23;
+  --warn:      #d9a45c;
+  --warn-soft: #322616;
+  --info:      #85b2d8;
+  --info-soft: #1a2733;
+
+  --on-accent: #16130f;
+
+  --shadow-overlay: 0 18px 44px -12px rgba(0, 0, 0, 0.6);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Browser surfaces belong to the design too. */
+::selection { background: var(--accent-soft); color: var(--accent-ink); }
+html { caret-color: var(--accent); scrollbar-color: var(--rail-strong) transparent; }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--rail-strong); border-radius: 999px;
+  border: 3px solid var(--bg); background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-subtle); background-clip: padding-box; }
+
+a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-variation-settings: 'SOFT' 20, 'WONK' 1, 'opsz' 40;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+h1 { font-size: 28px; }
+h2 { font-size: 18px; letter-spacing: -0.01em; }
+h3 { font-size: 15.5px; }
+p  { margin: 0; }
+
+.num, .table .num, .stat-value, .value { font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- layout */
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  background: var(--surface-muted);
+  border-right: 1px solid var(--rail);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid var(--rail);
+}
+.sidebar-brand strong { font-family: var(--serif); font-size: 15.5px; font-weight: 600; }
+.sidebar-brand span { display: block; font-size: 11px; color: var(--ink-subtle); }
+
+.nav { padding: 8px; overflow-y: auto; flex: 1; }
+.nav-group-label {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-subtle); padding: 14px 10px 6px; font-weight: 600;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  color: var(--ink-muted); font-size: 14px; font-weight: 500;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+.nav-item:hover { background: var(--surface); color: var(--ink); }
+.nav-item[aria-current="page"] {
+  background: var(--surface); color: var(--ink);
+  font-weight: 600; box-shadow: inset 2px 0 0 var(--accent);
+}
+.nav-item[aria-current="page"] svg { color: var(--accent); }
+.nav-item svg { flex: 0 0 auto; color: var(--ink-subtle); }
+
+.sidebar-footer { border-top: 1px solid var(--rail); padding: 12px; }
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  height: var(--topbar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 0 26px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rail);
+  position: sticky; top: 0; z-index: 20;
+}
+.breadcrumbs { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-subtle); }
+.breadcrumbs a:hover { color: var(--ink); text-decoration: underline; }
+
+/*
+ * Sections space themselves.
+ *
+ * Vertical rhythm used to be hand-placed on each block, so any block that
+ * forgot its margin collided with the next one — which is what happened between
+ * the attention cards and the table under them. Owning the gap here means a new
+ * section cannot be added wrongly.
+ */
+.content { padding: 26px; max-width: 1560px; width: 100%; }
+.content > * + * { margin-top: 18px; }
+
+/* These already carry their own trailing space; the stack would double it. */
+.content > .page-head + *,
+.content > .toolbar + * { margin-top: 0; }
+
+.page-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; margin-bottom: 22px; flex-wrap: wrap;
+}
+.page-head .sub { color: var(--ink-muted); font-size: 14px; margin-top: 5px; max-width: 70ch; }
+
+/* ---------------------------------------------------------------- panels */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rail);
+  border-radius: var(--radius);
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--rail);
+}
+.card-body { padding: 18px; }
+.card-body.tight { padding: 12px 18px; }
+
+a .card { transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease); }
+a:hover .card { border-color: var(--rail-strong); background: var(--surface-muted); }
+
+.grid { display: grid; gap: 14px; }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.stat { padding: 16px 18px; }
+.stat-label {
+  font-size: 11px; color: var(--ink-subtle); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.stat-value {
+  font-family: var(--serif); font-size: 32px; font-weight: 600;
+  font-variation-settings: 'SOFT' 30, 'WONK' 1, 'opsz' 60;
+  letter-spacing: -0.02em; margin-top: 8px; line-height: 1;
+}
+.stat-hint { font-size: 12.5px; color: var(--ink-muted); margin-top: 6px; }
+
+/* ---------------------------------------------------------------- controls */
+.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.toolbar .spacer { flex: 1; }
+
+.input, .select {
+  background: var(--surface);
+  border: 1px solid var(--rail-strong);
+  border-radius: var(--radius-sm);
+  padding: 7px 11px;
+  font-size: 14px;
+  min-width: 0;
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+.input:hover, .select:hover { border-color: var(--ink-subtle); }
+.input:focus, .select:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.input::placeholder { color: var(--ink-subtle); }
+.input:disabled, .select:disabled { background: var(--surface-muted); color: var(--ink-subtle); cursor: not-allowed; }
+.search { min-width: 250px; }
+textarea.input { resize: vertical; min-height: 84px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+.field label { font-size: 13px; font-weight: 600; }
+.field .hint { font-size: 12px; color: var(--ink-subtle); }
+.field .error { font-size: 12.5px; color: var(--accent-ink); font-weight: 500; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 7px 13px; border-radius: var(--radius-sm);
+  border: 1px solid var(--rail-strong); background: var(--surface);
+  font-size: 14px; font-weight: 550; cursor: pointer; white-space: nowrap;
+  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
+              color var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+.btn:hover { background: var(--surface-muted); border-color: var(--ink-subtle); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; background: var(--surface-muted); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn-primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+.btn-primary:disabled { background: var(--accent); border-color: var(--accent); }
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-ghost:hover { background: var(--surface-muted); border-color: transparent; }
+.btn-danger { color: var(--accent-ink); }
+.btn-danger:hover { background: var(--accent-soft); border-color: var(--accent); }
+.btn-sm { padding: 4px 10px; font-size: 13px; }
+.btn svg { flex: 0 0 auto; }
+
+/* ---------------------------------------------------------------- table */
+.table-wrap { overflow-x: auto; }
+table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th {
+  text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-subtle); font-weight: 600;
+  padding: 9px 16px; border-bottom: 1px solid var(--rail); white-space: nowrap;
+  background: var(--surface-muted);
+}
+.table td { padding: 11px 16px; border-bottom: 1px solid var(--rail); vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr { transition: background var(--fast) var(--ease); }
+.table tbody tr:hover { background: var(--surface-muted); }
+.table .num { text-align: right; }
+.table a.link { font-weight: 560; }
+.table a.link:hover { color: var(--accent-ink); text-decoration: underline; }
+.table td.actions { text-align: right; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: var(--surface-muted); color: var(--ink-muted);
+  border: 1px solid var(--rail);
+}
+.badge-ok     { background: var(--ok-soft);     color: var(--ok);         border-color: transparent; }
+.badge-warn   { background: var(--warn-soft);   color: var(--warn);       border-color: transparent; }
+.badge-info   { background: var(--info-soft);   color: var(--info);       border-color: transparent; }
+.badge-danger { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+
+/* ---------------------------------------------------------------- progress */
+.progress { height: 6px; border-radius: 999px; background: var(--rail); overflow: hidden; min-width: 88px; flex: 1; }
+.progress > span {
+  display: block; height: 100%; border-radius: 999px; background: var(--accent);
+  transform-origin: left center;
+  animation: fill var(--base) var(--ease) both;
+}
+@keyframes fill { from { transform: scaleX(0.35); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.progress.ok > span   { background: var(--ok); }
+.progress.warn > span { background: var(--warn); }
+.progress-row { display: flex; align-items: center; gap: 10px; min-width: 130px; }
+.progress-row .value { font-size: 13px; color: var(--ink-muted); min-width: 36px; text-align: right; }
+
+.bar-chart { display: flex; flex-direction: column; gap: 11px; }
+.bar-row { display: grid; grid-template-columns: minmax(120px, 200px) 1fr 44px; gap: 12px; align-items: center; font-size: 13.5px; }
+.bar-row .num { text-align: right; color: var(--ink-muted); }
+
+/* ---------------------------------------------------------------- misc */
+.avatar {
+  width: 30px; height: 30px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent-ink);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11.5px; font-weight: 700; flex: 0 0 auto; letter-spacing: 0.01em;
+}
+.avatar.lg { width: 54px; height: 54px; font-size: 18px; font-family: var(--serif); }
+
+.person { display: inline-flex; align-items: center; gap: 10px; }
+.person .meta { font-size: 12px; color: var(--ink-subtle); }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rail); margin-bottom: 20px; overflow-x: auto; }
+.tab {
+  padding: 9px 13px; font-size: 14px; font-weight: 550; color: var(--ink-muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.tab:hover { color: var(--ink); border-bottom-color: var(--rail-strong); }
+.tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+.empty { text-align: center; padding: 40px 20px; color: var(--ink-muted); }
+.empty svg { margin-bottom: 12px; }
+.empty h3 { margin-bottom: 6px; }
+.empty p { max-width: 44ch; margin: 0 auto; }
+
+.alert {
+  padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px;
+  background: var(--accent-soft); color: var(--accent-ink); margin-bottom: 16px;
+}
+.alert-ok { background: var(--ok-soft); color: var(--ok); }
+.alert-info { background: var(--info-soft); color: var(--info); }
+
+.muted { color: var(--ink-muted); }
+.subtle { color: var(--ink-subtle); font-size: 13px; }
+.stack { display: flex; flex-direction: column; gap: 13px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.row-between { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.nowrap { white-space: nowrap; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--rail) 25%, var(--surface-muted) 50%, var(--rail) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+  border-radius: var(--radius-sm);
+  height: 13px;
+}
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ---------------------------------------------------------------- login */
+.login-page { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 1fr; }
+.login-art {
+  background: #16150f; color: #f7f5ee;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 56px; gap: 40px;
+}
+.login-art h2 {
+  font-size: 42px; line-height: 1.1; color: #fffefb;
+  font-variation-settings: 'SOFT' 40, 'WONK' 1, 'opsz' 100;
+}
+.login-art p { color: rgba(247, 245, 238, 0.72); max-width: 44ch; }
+.login-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.login-panel {
+  border: 1px solid rgba(247, 245, 238, 0.22); border-radius: var(--radius-sm);
+  padding: 14px; min-height: 96px; display: flex; flex-direction: column; justify-content: space-between;
+}
+.login-panel .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(247,245,238,0.6); }
+.login-panel .v { font-family: var(--serif); font-size: 22px; color: #fffefb; }
+.login-form-wrap { display: flex; align-items: center; justify-content: center; padding: 40px; }
+.login-form { width: 100%; max-width: 356px; }
+.demo-accounts { margin-top: 24px; border-top: 1px solid var(--rail); padding-top: 14px; }
+.demo-accounts button {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px;
+  border-radius: var(--radius-sm); border: 1px solid var(--rail);
+  background: var(--surface); margin-bottom: 6px; cursor: pointer; font-size: 13px;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.demo-accounts button:hover { background: var(--surface-muted); border-color: var(--rail-strong); }
+.demo-accounts .who { font-weight: 600; }
+.demo-accounts .where { color: var(--ink-subtle); font-size: 12px; }
+
+/* ---------------------------------------------------------------- overlays */
+.overlay {
+  position: fixed; inset: 0; background: rgba(22, 21, 15, 0.34);
+  display: flex; z-index: 60; animation: fade var(--fast) var(--ease);
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.drawer {
+  margin-left: auto; width: min(480px, 100%); background: var(--surface);
+  height: 100%; box-shadow: var(--shadow-overlay); display: flex; flex-direction: column;
+  animation: slide-in var(--base) var(--ease);
+}
+@keyframes slide-in { from { transform: translateX(24px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.modal {
+  margin: auto; width: min(560px, 92vw); background: var(--surface);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-overlay);
+  max-height: 88vh; display: flex; flex-direction: column;
+  animation: pop-in var(--base) var(--ease);
+}
+@keyframes pop-in { from { transform: translateY(8px) scale(0.985); opacity: 0; } to { transform: none; opacity: 1; } }
+.panel-head { padding: 16px 20px; border-bottom: 1px solid var(--rail); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.panel-body { padding: 20px; overflow-y: auto; }
+.panel-foot { padding: 14px 20px; border-top: 1px solid var(--rail); display: flex; gap: 10px; justify-content: flex-end; }
+
+.dl { display: grid; grid-template-columns: 160px 1fr; gap: 10px 16px; font-size: 14px; }
+.dl dt { color: var(--ink-subtle); font-size: 13px; }
+.dl dd { margin: 0; }
+
+.step-list { display: flex; flex-direction: column; gap: 7px; }
+.step {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+  border: 1px solid var(--rail); border-radius: var(--radius-sm); background: var(--surface);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.step:hover { border-color: var(--rail-strong); }
+.step.done { background: var(--surface-muted); }
+.step .order { width: 20px; color: var(--ink-subtle); font-size: 13px; font-variant-numeric: tabular-nums; }
+.step .title { flex: 1; font-weight: 550; }
+.step.done .title { color: var(--ink-muted); text-decoration: line-through; text-decoration-color: var(--rail-strong); }
+.step .drag { cursor: grab; color: var(--ink-subtle); }
+.step .drag:active { cursor: grabbing; }
+.step[draggable="true"] { user-select: none; }
+.step.dragging { opacity: 0.45; }
+
+.checkbox { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+/* ---------------------------------------------------------------- responsive
+ * Desktop stays desktop. Under 1080px the sidebar collapses to its icon rail
+ * and tables scroll sideways; the management workflows are never traded for a
+ * mobile card list — that is what the React Native app is for. */
+@media (max-width: 1280px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1080px) {
+  :root { --sidebar-w: 60px; }
+  .sidebar-brand span, .nav-item span.label, .nav-group-label, .sidebar-footer .who { display: none; }
+  .sidebar-brand { justify-content: center; padding: 16px 8px; }
+  .nav-item { justify-content: center; padding: 9px; }
+  .content { padding: 18px; }
+  .grid-3, .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .dl { grid-template-columns: 130px 1fr; }
+}
+@media (max-width: 860px) {
+  .grid-4 { grid-template-columns: minmax(0, 1fr); }
+  .login-page { grid-template-columns: 1fr; }
+  .login-art { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------- calendar
+ * The month grid is the events page's signature surface: a printed strip of
+ * panels where a day carrying events is inked rather than merely tinted. */
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+
+.calendar-head { margin-bottom: 8px; }
+.calendar-weekday {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--ink-subtle); font-weight: 600; text-align: center; padding-bottom: 2px;
+}
+
+.calendar-day {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  min-height: 62px; padding: 8px 4px 6px;
+  border: 1px solid var(--rail); border-radius: var(--radius-sm);
+  background: var(--surface); cursor: pointer; font: inherit;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.calendar-day:hover { border-color: var(--rail-strong); background: var(--surface-muted); }
+.calendar-day.outside { background: var(--surface-muted); color: var(--ink-subtle); }
+.calendar-day.outside .calendar-date { opacity: 0.55; }
+
+.calendar-date {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 999px;
+  font-size: 13.5px; font-variant-numeric: tabular-nums;
+}
+
+/* Today is ringed; a selected day is filled. Events add ink dots underneath. */
+.calendar-day.today .calendar-date { box-shadow: inset 0 0 0 1.5px var(--ink-subtle); font-weight: 600; }
+.calendar-day.selected { border-color: var(--accent); }
+.calendar-day.selected .calendar-date { background: var(--accent); color: var(--on-accent); font-weight: 600; box-shadow: none; }
+.calendar-day.has-events:not(.selected) .calendar-date { box-shadow: inset 0 0 0 1.5px var(--accent); font-weight: 600; }
+
+.calendar-dots { display: flex; gap: 3px; }
+.calendar-dot { width: 4px; height: 4px; border-radius: 999px; background: var(--accent); }
+.calendar-day.selected .calendar-dot { background: var(--accent-ink); }
+.calendar-day.outside .calendar-dot { background: var(--ink-subtle); }
+
+.day-event {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--rail); border-radius: var(--radius-sm);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.day-event:hover { border-color: var(--rail-strong); background: var(--surface-muted); }
+.day-event .time {
+  font-variant-numeric: tabular-nums; font-size: 13px; color: var(--accent-ink);
+  font-weight: 600; white-space: nowrap; padding-top: 1px;
+}
+.day-event .title { font-weight: 560; }
+
+@media (max-width: 1080px) {
+  .calendar-layout { grid-template-columns: minmax(0, 1fr); }
+  .calendar-day { min-height: 54px; }
+}
+
+/* ---------------------------------------------------------------- bridge
+ * Shown only on phone-width screens, where this workspace is the wrong tool.
+ * Anchored to the bottom so it never pushes the page around, and carrying a
+ * shadow rather than a border because it floats above the content. */
+.platform-bridge {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
+  animation: bridge-in var(--base) var(--ease);
+}
+@keyframes bridge-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.platform-bridge-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.platform-bridge-text strong { font-size: 14px; }
+.platform-bridge-text span { font-size: 12.5px; color: var(--ink-muted); }
+
+/* ---------------------------------------------------------------- notifications
+   The bell is deliberately inert until something waits. Everything that draws
+   the eye — the dot, the unread rule, the weight — is spent on one signal, so
+   glancing at the header answers "is anything mine?" without reading a word. */
+.notif { position: relative; }
+
+.notif-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.notif-bell:hover { color: var(--ink); background: var(--surface-muted); }
+.notif-bell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.notif-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 11px;
+  text-align: center;
+}
+
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: min(360px, calc(100vw - 32px));
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+  /* Opens from where it was summoned rather than fading in place. */
+  animation: notif-open 160ms var(--ease);
+  transform-origin: top right;
+}
+@keyframes notif-open {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notif-panel { animation: none; }
+}
+
+.notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rail);
+}
+.notif-head strong { font-family: var(--serif); font-size: 15px; letter-spacing: -0.01em; }
+
+.notif-list { max-height: min(60vh, 420px); overflow-y: auto; }
+
+.notif-item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--rail);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--fast) var(--ease);
+}
+.notif-item:last-child { border-bottom: 0; }
+.notif-item:hover { background: var(--surface-muted); }
+.notif-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Unread is carried by weight and a small mark, not by a tinted row: a coloured
+   band across every new item makes the list louder the more there is to read. */
+.notif-item.is-unread .notif-title { font-weight: 620; }
+.notif-item.is-unread .notif-title::after {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  vertical-align: 0.14em;
+}
+
+.notif-title { font-size: 13.5px; line-height: 1.35; color: var(--ink); }
+.notif-body  { font-size: 12.5px; line-height: 1.4; color: var(--ink-muted); }
+.notif-when  { font-size: 11px; color: var(--ink-subtle); font-variant-numeric: tabular-nums; }
+
+.notif-empty {
+  margin: 0;
+  padding: 22px 16px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ---------------------------------------------------------------- required training */
+.assign-terms {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+.assign-toggle { display: flex; gap: 9px; align-items: flex-start; cursor: pointer; }
+.assign-toggle input { margin-top: 2px; }
+.assign-toggle span { display: grid; gap: 1px; }
+.assign-toggle strong { font-size: 13.5px; font-weight: 600; }
+.assign-toggle .subtle { font-size: 12px; }
+.assign-due { display: flex; align-items: center; gap: 9px; }
+.assign-due .input { width: auto; }
+
+/* The requirement chip states its own deadline, so a learner never has to open
+   a course to find out whether it is late. */
+.req {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.req-due_soon { background: var(--warn-soft); color: var(--warn); }
+.req-overdue  { background: var(--accent-soft); color: var(--accent-ink); }
+.req-done     { background: var(--ok-soft); color: var(--ok); }
+
+/* ---------------------------------------------------------------- wrong device
+   A refusal, so it reads as a considered answer rather than an error: centred,
+   generous, and in the same voice as the rest of the product. */
+.wrong-device {
+  display: grid;
+  gap: 14px;
+  place-content: center;
+  justify-items: center;
+  min-height: 100svh;
+  padding: 32px 24px;
+  text-align: center;
+  background: var(--bg);
+}
+.wrong-device h1 {
+  max-width: 18ch;
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 560;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.wrong-device p {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 15px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.wrong-device .muted { color: var(--ink-subtle); font-size: 13px; }
+
+/* ---------------------------------------------------------------- appearance
+   A segmented control: the active state is visible, and every option is one
+   press away. Elevation is declared once, by the moving indicator. */
+.theme-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.theme-switch-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink-subtle);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.theme-switch-option:hover { color: var(--ink); }
+.theme-switch-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.theme-switch-option.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(22, 21, 15, 0.10);
+}
+:root:not([data-theme='light']) .theme-switch-option.is-active,
+:root[data-theme='dark'] .theme-switch-option.is-active {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Below the widest breakpoint the labels are the first thing to go; the icons
+   still distinguish light from dark, and Auto keeps its word. */
+@media (max-width: 900px) {
+  .theme-switch-option span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .theme-switch-option[aria-pressed] { padding: 5px 8px; }
+  .theme-switch-option:first-child span { position: static; width: auto; height: auto; clip-path: none; }
+}
+
+/* The way out of the refusal. Sized for a thumb, since this page is only ever
+   seen on a phone. */
+.wrong-device-action {
+  margin-top: 6px;
+  padding: 11px 20px;
+  font-size: 15px;
+}
+
+/* ---------------------------------------------------------------- permissions
+   Resource by operation. The grid is the point: reading down a column answers
+   "what can this role destroy?" without parsing forty checkbox labels. */
+.crud {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.crud thead th {
+  padding: 0 6px 8px;
+  color: var(--ink-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.crud thead th:first-child { width: 1%; }
+.crud .crud-extras-head { text-align: left; padding-left: 12px; }
+
+.crud tbody th {
+  padding: 7px 12px 7px 0;
+  color: var(--ink);
+  font-weight: 550;
+  text-align: left;
+  white-space: nowrap;
+}
+.crud tbody tr + tr th,
+.crud tbody tr + tr td { border-top: 1px solid var(--rail); }
+
+.crud td { padding: 7px 6px; text-align: center; }
+
+/* The whole cell is the target, not just the 13px box. */
+.crud-cell {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--fast) var(--ease);
+}
+.crud-cell:hover { background: var(--surface-muted); }
+
+/* A gap that reads as "this resource has no such operation", not as an unticked
+   box someone forgot. */
+.crud-none {
+  color: var(--rail-strong);
+  font-size: 13px;
+  user-select: none;
+}
+
+.crud-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-left: 12px !important;
+  text-align: left !important;
+}
+.crud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.crud-chip:hover { color: var(--ink); }
+
+@media (max-width: 720px) {
+  .crud, .crud thead, .crud tbody, .crud tr, .crud td, .crud th { display: block; }
+  .crud thead { display: none; }
+  .crud tbody tr { padding: 10px 0; border-top: 1px solid var(--rail); }
+  .crud tbody th { padding: 0 0 6px; }
+  .crud td { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 0; text-align: left; }
+  .crud td::before { content: attr(data-label); color: var(--ink-subtle); font-size: 11px; }
+  /* Stacked, an operation a resource does not have is simply absent. The dash
+     only reads as "not applicable" against the columns of the wide grid; on its
+     own it looks like a control someone forgot to tick. */
+  .crud td:has(.crud-none) { display: none; }
+  .crud-extras { padding-left: 0 !important; width: 100%; }
+}
+
+/* ---------------------------------------------------------------- handover
+   Sits between the page title and the tabs, where it is read before the
+   Deactivate button is pressed rather than after. */
+.handover {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.handover-text { display: grid; gap: 2px; flex: 1; min-width: 240px; }
+.handover-text strong { font-size: 13.5px; font-weight: 600; }
+.handover-text span { font-size: 12.5px; opacity: 0.85; }
+
+/* An acknowledgement already given is a statement, not a control. */
+.ack-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ok);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Asks something of the reader, so it sits above the search rather than beside
+   the rows it refers to. */
+.ack-prompt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--info-soft);
+  color: var(--info);
+}
+.ack-prompt div { display: grid; gap: 2px; }
+.ack-prompt strong { font-size: 13.5px; font-weight: 600; }
+.ack-prompt span { font-size: 12.5px; opacity: 0.85; }
+
+.assign-dept { display: grid; gap: 5px; margin-bottom: 12px; }
+.assign-dept .subtle { font-size: 12px; }
+
+/* ---------------------------------------------------------------- requests
+   The only part of the documents page that asks something of the reader, so it
+   sits above everything and states the deadline without being opened. */
+.requests { margin-bottom: 18px; }
+.request-list { display: grid; }
+.request {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--rail);
+}
+.request:last-child { border-bottom: 0; }
+.request-text { display: grid; gap: 3px; flex: 1; min-width: 260px; }
+.request-text strong { font-size: 14px; font-weight: 600; }
+.request-text span { font-size: 12.5px; color: var(--ink-muted); }
+.request-text .req { justify-self: start; margin-top: 2px; }
+.request-note { color: var(--accent-ink) !important; }
+.request-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------- checklists */
+.checklist-items { display: grid; gap: 10px; }
+.checklist-item {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+.checklist-item-main { display: grid; gap: 6px; flex: 1; min-width: 240px; }
+.checklist-item-days,
+.checklist-item-file { display: grid; gap: 4px; }
+.checklist-item-days { grid-template-columns: auto 78px auto; align-items: center; gap: 6px; }
+.checklist-item-days .subtle,
+.checklist-item-file .subtle { font-size: 11.5px; }
+.checklist-item-file .select { min-width: 190px; }
+
+/* Closing line of a panel: a count or a caveat, separated from the rows it
+   summarises rather than floating under them. */
+.card-foot {
+  padding: 11px 18px;
+  border-top: 1px solid var(--rail);
+  font-size: 12.5px;
+}
+
+/* ================================================================ toasts
+   A slip of newsprint pushed onto the desk from the corner, then pushed back
+   off. It arrives from the edge it lives on, so its origin is legible, and it
+   leaves faster than it came — an exit that lingers reads as latency. */
+.toaster {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 90;
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  /* The stack must not swallow clicks on the work behind it. */
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 40px));
+  padding: 11px 12px 11px 13px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-overlay);
+  font-size: 13.5px;
+  line-height: 1.4;
+  animation: toast-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Exit is its own animation rather than a reversed entrance: it leaves along
+   the axis it arrived on, quicker, and takes its own height with it so the
+   stack below closes up instead of jumping. */
+.toast.is-leaving {
+  animation: toast-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(16px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+/* The stack closes up through the grid row that holds the toast, not by
+   animating the toast's own height: `max-height` and `margin` are layout
+   properties, and animating them janks every sibling on the way out. */
+@keyframes toast-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateX(12px) scale(0.98); }
+}
+
+.toast-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 200ms cubic-bezier(0.4, 0, 1, 1);
+}
+.toast-slot.is-leaving { grid-template-rows: 0fr; }
+.toast-slot > * { min-height: 0; }
+
+/* The tone is carried by one small mark, not by flooding the whole panel with
+   colour — a success message that shouts is as tiring as no message at all. */
+.toast-mark {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.toast-error .toast-mark { background: var(--accent-soft); color: var(--accent-ink); }
+.toast-info  .toast-mark { background: var(--info-soft); color: var(--info); }
+
+.toast-message { flex: 1; min-width: 0; }
+
+.toast-dismiss {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-subtle);
+  cursor: pointer;
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+.toast-dismiss:hover { color: var(--ink); background: var(--surface-muted); }
+.toast-dismiss:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+@media (max-width: 640px) {
+  /* On a phone the corner is where the thumb is; full width reads better and
+     keeps the dismiss target reachable. */
+  .toaster { left: 16px; right: 16px; bottom: 16px; justify-items: stretch; }
+  .toast { max-width: none; }
+}
+
+/* ================================================================ motion
+   Operate mode: motion explains feedback, state and continuity. Nothing here
+   makes anybody wait, and nothing plays on page load — a workspace that
+   choreographs itself every navigation is exhausting by the third visit. */
+
+/* Panels leave the way they arrived, faster. Entrance states arrival; exit
+   states departure; matching durations would read as a stall. */
+.overlay.is-leaving { animation: fade-out 180ms var(--ease) forwards; }
+.overlay.is-leaving .modal { animation: pop-out 180ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+.overlay.is-leaving .drawer { animation: slide-out 180ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes pop-out  { to { opacity: 0; transform: translateY(6px) scale(0.985); } }
+@keyframes slide-out { to { opacity: 0; transform: translateX(20px); } }
+
+/* Press feedback. A button that only changes colour on click leaves the person
+   unsure whether the press registered; a small, fast depression is unmistakable
+   and costs nothing. */
+.btn {
+  transition:
+    background var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    transform 90ms var(--ease);
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { cursor: not-allowed; }
+
+/* A busy control should look busy rather than merely dead. */
+.btn:disabled:not(.btn-ghost) { opacity: 0.65; }
+
+/* Rows acknowledge the pointer, so a long table stays trackable across its
+   width without a heavy zebra pattern. */
+.table tbody tr { transition: background var(--fast) var(--ease); }
+.table tbody tr:hover { background: var(--surface-muted); }
+
+/* Inputs settle into focus rather than snapping. */
+.input, .select, .checkbox {
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+/* Navigation marks the current page by moving, not by repainting: the active
+   rail slides between items so the change of place is legible. */
+.nav-item { transition: background var(--fast) var(--ease), color var(--fast) var(--ease); }
+
+/* Progress bars already grow on arrival through the `fill` keyframe, which
+   scales rather than resizing. Transitioning `width` here would animate a
+   layout property on every value change and thrash the row it sits in. */
+
+/*
+ * Reduced motion.
+ *
+ * Not "no motion": feedback that confirms an action has to survive, or the
+ * interface stops answering. Movement through space is removed; opacity, colour
+ * and state changes stay, and every duration collapses to something instant but
+ * still perceptible.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* These carry meaning rather than character, so they keep a short, gentle
+     fade in place of their movement. */
+  .toast { animation: toast-in-reduced 120ms linear !important; }
+  .toast.is-leaving { animation: fade-out 120ms linear forwards !important; }
+  .modal, .drawer, .notif-panel { animation: toast-in-reduced 120ms linear !important; }
+  .btn:active:not(:disabled) { transform: none; }
+}
+
+@keyframes toast-in-reduced { from { opacity: 0; } to { opacity: 1; } }
+
+/* A 26px hit area is fine under a mouse and mean under a thumb. Where the
+   pointer is coarse the dismiss grows to a real target without changing the
+   toast's visual weight. */
+@media (pointer: coarse) {
+  .toast-dismiss { width: 40px; height: 40px; }
+  .toast { padding: 10px 8px 10px 13px; }
+}
+
+/* Who decided, and when. Quiet by design — it sits beside a status the eye has
+   already read, and answers the question that follows it. */
+.stamp {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-subtle);
+  font-size: 11.5px;
+  line-height: 1.3;
+  cursor: help;
+}
+
+/* A line of context under a worklist heading: why this group is worth the
+   attention it is asking for. */
+.worklist-blurb {
+  margin: 0;
+  padding: 0 18px 12px;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 78ch;
+}
+
+/* ---------------------------------------------------------------- first week
+   A distinct block inside the form: this is setup that happens once, not part
+   of the person's record, and it should not read as more fields to fill in. */
+.first-week {
+  margin: 22px 0 4px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+.first-week-head { display: grid; gap: 3px; margin-bottom: 14px; }
+.first-week-head strong { font-size: 14px; font-weight: 600; }
+.first-week-head span { font-size: 12.5px; color: var(--ink-muted); line-height: 1.5; max-width: 62ch; }
+.first-week-courses { display: grid; gap: 7px; }
+.first-week-course { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; }
+
+/* ---------------------------------------------------------------- saved views */
+.saved-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--rail);
+  border-radius: 999px;
+  background: var(--surface);
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.view-chip:hover { border-color: var(--rail-strong); }
+
+.view-chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.view-chip-open {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.view-chip-remove {
+  border: 0;
+  background: none;
+  color: var(--ink-subtle);
+  display: flex;
+  align-items: center;
+  /* Sized for a thumb, not a mouse: the same rule the toast dismiss follows. */
+  padding: 6px 9px 6px 2px;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: color var(--fast) var(--ease);
+}
+
+.view-chip-remove:hover { color: var(--accent); }
+
+@media (pointer: coarse) {
+  .view-chip-open { padding: 9px 14px; }
+  .view-chip-remove { padding: 9px 12px 9px 4px; }
+}
+
+/* ---------------------------------------------------------------- timeline */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.timeline-item {
+  display: grid;
+  /* Dates in their own column so the eye scans one edge rather than hunting
+     for a timestamp at the end of a sentence of variable length. */
+  grid-template-columns: 148px 1fr;
+  gap: 14px;
+  align-items: baseline;
+  padding-left: 14px;
+  border-left: 2px solid var(--rail);
+}
+
+.timeline-credential { border-left-color: var(--warn); }
+.timeline-document   { border-left-color: var(--info); }
+.timeline-training   { border-left-color: var(--ok); }
+
+.timeline-when { font-size: 12.5px; }
+
+@media (max-width: 720px) {
+  .timeline-item { grid-template-columns: 1fr; gap: 2px; }
+}
