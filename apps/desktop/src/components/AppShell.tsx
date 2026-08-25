@@ -44,6 +44,10 @@ function navFor(session: Session): NavGroup[] {
         can('analytics.view_full', role, p, grants) ? { href: '/analytics', label: 'Analytics', icon: 'analytics' } : null,
         can('report.view_full', role, p, grants) ? { href: '/reports', label: 'Reports', icon: 'reports' } : null,
         can('analytics.view_full', role, p, grants) ? { href: '/activity', label: 'Activity', icon: 'activity' } : null,
+        // Super Administrators only. Not a report — the record the workspace is
+        // investigated from when something has gone wrong.
+        can('user.role_management_self', role, p, grants)
+          ? { href: '/security', label: 'Monitoring', icon: 'settings' } : null,
       ].filter(Boolean) as NavGroup['items'],
     },
     {

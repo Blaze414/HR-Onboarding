@@ -1,4 +1,4 @@
-import { analyticsService, credentialService, formatDate } from '@snoopy/shared';
+import { analyticsService, authService, credentialService, formatDate, formatDateTime } from '@snoopy/shared';
 import { ProfileForm } from '@/components/ProfileForm';
 import { Avatar, Card, PageHead, ProgressBar, StatusBadge } from '@/components/ui';
 import { MyCredentials } from '@/components/MyCredentials';
@@ -10,9 +10,10 @@ export const dynamic = 'force-dynamic';
 export default async function ProfilePage() {
   const session = await requireCapability('employee.view_self');
   const db = await getServerSupabase();
-  const [credentials, credentialTypes] = await Promise.all([
+  const [credentials, credentialTypes, signIns] = await Promise.all([
     credentialService.mine(db, session.userId),
     credentialService.listTypes(db),
+    authService.listSignIns(db),
   ]);
   const progress = await analyticsService.getEmployeeProgress(db, session.userId);
   const p = session.profile;
@@ -54,6 +55,45 @@ export default async function ProfilePage() {
           </Card>
         </div>
       </div>
+      {/*
+        * A stolen session is the failure this app cannot prevent, only make
+        * visible. The person whose account it is knows which of these were
+        * them; nobody else does, which is why nobody else can see this list.
+        */}
+      <Card title="Recent sign-ins">
+        {signIns.length === 0 ? (
+          <p className="muted">Nothing recorded yet.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr><th>When</th><th>App and device</th><th>Time zone</th><th>From</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+              {signIns.map((s) => (
+                <tr key={s.id}>
+                  <td>{formatDateTime(s.at)}</td>
+                  <td>{authService.signInSummary(s)}</td>
+                  <td>{s.time_zone ?? <span className="subtle">—</span>}</td>
+                  <td>{s.ip ?? <span className="subtle">—</span>}</td>
+                  <td>
+                    {s.succeeded
+                      ? <span className="subtle">Signed in</span>
+                      : <span className="warn">Failed attempt</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <p className="muted" style={{ marginTop: 12 }}>
+          One history for both apps — a sign in on the phone appears here, and this one
+          appears there. Failed attempts are counted wherever they happen: five wrong
+          passwords in fifteen minutes and the account stops answering until the window
+          passes. The time zone is the one the device reported, not a guess from the
+          address.
+        </p>
+      </Card>
+
       <MyCredentials
         credentials={credentials}
         types={credentialTypes}

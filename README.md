@@ -21,11 +21,13 @@ for tables, filters, bulk operations and reporting.
 
 **Getting it running** — [Requirements](#requirements) · [Getting started](#getting-started) · [Migrations and seed data](#migrations-and-seed-data) · [Run both apps together](#run-both-apps-together) · [Demo accounts](#demo-accounts) · [Screenshots](#screenshots) · ["Cannot reach the server"](#cannot-reach-the-server)
 
+**Compliance and security** — [Australian employment record obligations](#australian-employment-record-obligations) · [Zero Trust, and where it actually bites](#zero-trust-and-where-it-actually-bites) · [One history, both apps](#one-history-both-apps) · [Session and activity monitoring](#session-and-activity-monitoring) · [Row Level Security](#row-level-security)
+
 **How it is put together** — [Architecture](#architecture) · [Repository layout](#repository-layout) · [Ownership model](#ownership-model) · [Row Level Security](#row-level-security) · [Roles and permissions](#roles-and-permissions) · [Platform capability strategy](#platform-capability-strategy) · [Monorepo notes](#monorepo-notes) · [Conventions](#conventions)
 
-**What the phone does** — [What needs you, on a phone](#what-needs-you-on-a-phone) · [Returning what was asked of you](#returning-what-was-asked-of-you) · [Offering a certificate from the phone](#offering-a-certificate-from-the-phone) · [Uploading a document, with its details](#uploading-a-document-with-its-details) · [A manager's team, read-only](#a-managers-team-read-only)
+**What the phone does** — [Who opened my files](#who-opened-my-files) · [What needs you, on a phone](#what-needs-you-on-a-phone) · [Returning what was asked of you](#returning-what-was-asked-of-you) · [Offering a certificate from the phone](#offering-a-certificate-from-the-phone) · [Uploading a document, with its details](#uploading-a-document-with-its-details) · [A manager's team, read-only](#a-managers-team-read-only)
 
-**What it does** — [Progress and analytics](#progress-and-analytics) · [Required training](#required-training) · [Notifications](#notifications) · [Deadlines, reminders and handover](#deadlines-reminders-and-handover) · [What needs you](#what-needs-you) · [Clearing the queue in batches](#clearing-the-queue-in-batches) · [Adding somebody, in one submit](#adding-somebody-in-one-submit) · [Optional credentials, and who could cover what](#optional-credentials-and-who-could-cover-what) · [Asking for documents, and getting them back](#asking-for-documents-and-getting-them-back) · [Managers, evidence and leaving](#managers-evidence-and-leaving) · [One person's history](#one-persons-history) · [Saved views](#saved-views) · [Reminders that leave the building](#reminders-that-leave-the-building) · [Reminders that reach a shut phone](#reminders-that-reach-a-shut-phone) · [Dark mode](#dark-mode)
+**What it does** — [Reading a document without leaving](#reading-a-document-without-leaving) · [Progress and analytics](#progress-and-analytics) · [Required training](#required-training) · [Notifications](#notifications) · [Deadlines, reminders and handover](#deadlines-reminders-and-handover) · [What needs you](#what-needs-you) · [Clearing the queue in batches](#clearing-the-queue-in-batches) · [Adding somebody, in one submit](#adding-somebody-in-one-submit) · [Optional credentials, and who could cover what](#optional-credentials-and-who-could-cover-what) · [Asking for documents, and getting them back](#asking-for-documents-and-getting-them-back) · [Managers, evidence and leaving](#managers-evidence-and-leaving) · [One person's history](#one-persons-history) · [Saved views](#saved-views) · [Reminders that leave the building](#reminders-that-leave-the-building) · [Reminders that reach a shut phone](#reminders-that-reach-a-shut-phone) · [Dark mode](#dark-mode)
 
 **Shipping** — [Testing and validation](#testing-and-validation) · [Performance notes](#performance-notes) · [Installable web app](#installable-web-app) · [One link, two apps](#one-link-two-apps) · [Deploying to Vercel](#deploying-to-vercel)
 
@@ -231,6 +233,20 @@ not a layout accident.
 |---|---|
 | ![Administrator on the phone](docs/screenshots/12-home-admin.png) | ![Reports](docs/screenshots/d05-reports-required.png) |
 
+**The record, and what it owes.** Employment particulars sit on the record
+because the law requires them; the statements below are computed from them
+rather than remembered.
+
+| Statements owed | Recent sign-ins |
+|---|---|
+| ![Statements owed](docs/screenshots/d13-statements.png) | ![Recent sign-ins](docs/screenshots/d12-sign-ins.png) |
+
+**Reading a file where it lives.** Preview renders the document in the
+workspace rather than handing it to the browser — and records the read exactly
+as a download would.
+
+![Previewing a document](docs/screenshots/d11-preview.png)
+
 **Handing things in from the phone.** These three screens are the phone's real
 job: discharge an obligation where you are standing, and leave the judging to
 somebody at a desk.
@@ -306,6 +322,322 @@ Client-side capability checks are UX. **RLS is the security boundary.**
 
 ---
 
+## Australian employment record obligations
+
+This is an HR workspace, so the record it produces has to stand up. Three
+obligations under Australian law shaped what the app stores, what it refuses to
+delete, and what it works out on its own. Each one is enforced in the database
+rather than in a form, because a rule that lives in a form is a rule until
+somebody uses `curl`.
+
+> Not legal advice, and not a compliance product. It is the record-keeping an
+> HR workspace has to get right before anything else it does is worth anything.
+
+### What kind of employment it is
+
+The **Fair Work Regulations 2009 (reg 3.32)** require an employer to record,
+for every employee, whether the employment is full-time or part-time, and
+whether it is permanent, temporary or casual. This workspace held a job title
+and a start date and neither of those two facts, so the record it produced
+could not be a complete one.
+
+They are columns, not free text, because the rest of the app has to reason
+about them — who is casual decides who is owed a Casual Employment Information
+Statement, and when. The database refuses the contradiction (casual on one
+count and not the other) rather than storing it for somebody to resolve later
+from memory, and the self-service guard pins both: an employee editing their
+own profile cannot move themselves off casual, which would change what the
+employer owes them.
+
+`end_date` is on the record for the same reason — *when did they leave* is
+itself a required particular, and inferring it from a deactivated account is
+not a record.
+
+### Seven years, and not a day less
+
+**Reg 3.31** requires employee records to be kept for seven years from the day
+each record is made — not from the day the person leaves. The app was
+hard-deleting personal documents from storage on request, which is the opposite
+obligation.
+
+Every document now carries `retain_until`, and a `BEFORE DELETE` trigger
+refuses to destroy a personal one inside it, with the date in the message. Three
+deliberate edges:
+
+- **A shared document is not an employment record.** The handbook is published
+  to the workspace, not evidence about anybody, so it stays deletable.
+- **The day it was filed is left open.** A document put on the wrong person can
+  be taken back off — a record describing the wrong employee is a *false*
+  record, which reg 3.44 prohibits separately. After that day it stands.
+- **The period can be extended but never shortened.** A retention date that can
+  be set to yesterday is not a retention period at all; the delete guard would
+  wave the record straight through. A record held for a dispute is kept longer,
+  never less, so the later of the two dates wins.
+
+The desktop replaces the delete button with *"Record — kept until 12 Aug 2033"*
+rather than offering a control that fails.
+
+### The statements that fall due again
+
+Two obligations no amount of good intent covers, because both are about
+*timing*:
+
+| | Obligation | When |
+|---|---|---|
+| **s.125** | Fair Work Information Statement | Every new employee, before starting or as soon as practicable after |
+| **s.125B** | Casual Employment Information Statement | Every casual, on the same terms — **and again** at set points afterwards |
+
+The second is what gets missed. It is not an event anybody witnesses; it is a
+date that passes. A **small business employer** (fewer than 15 employees) owes
+it again at 12 months; every other employer owes it at 6 months, at 12 months,
+and every 12 months after that for as long as the employment stays casual.
+
+So it is **computed, not remembered**. The `statement_obligations` view derives
+every falling-due from the employee's own start date and the size of the
+workspace, and left-joins what was actually handed over. Nothing is scheduled
+and nothing drifts: somebody who turns casual this morning grows the right
+history immediately, and an anniversary that has not arrived yet still shows,
+so a statement can be given before it is late rather than after.
+
+![Statements owed](docs/screenshots/d13-statements.png)
+
+Recording that one was handed over stores the date it was **owed**, not the
+date it was given, so settling a March obligation in August still reads as
+March. The row cannot be edited or removed afterwards — there is no update or
+delete policy on the table — because *"we gave it to her in March"* is only
+worth anything if it cannot be typed in later. An employee sees what they were
+given and cannot record it themselves; it is a record of what the employer did.
+
+Headcount is counted on the head, not the hours. s.23 counts casuals towards
+the small-business threshold only when they are employed on a regular and
+systematic basis, which this workspace does not model — so it counts them all
+and errs towards owing the statement more often rather than less.
+
+### What this does not do
+
+- **No payroll.** No pay rates, hours worked, overtime, penalty rates,
+  deductions, superannuation or pay slips — the largest part of reg 3.33–3.36
+  and all of the pay slip rules. This app holds the *people* record; it is not
+  a payroll system and does not pretend the seven-year clock it enforces covers
+  time and wages records it never sees.
+- **No leave balances**, so nothing about accruals or cash-out records.
+- **The Privacy Act employee records exemption is not leaned on.** Private
+  sector employee records are currently exempt from the Australian Privacy
+  Principles, and the government has agreed in principle to narrow that. The
+  app is built as if it were not exempt: personal documents are visible to
+  their subject, reads of them are logged and shown to the subject, emergency
+  contacts are readable only by the person and HR, and nothing is retained
+  beyond the period that requires it.
+- **Right to disconnect, casual conversion requests, WGEA reporting, payday
+  super** — all real 2025–2026 obligations, none of them modelled here.
+
+**Sources.** [Fair Work Ombudsman — Record-keeping](https://www.fairwork.gov.au/pay-and-wages/paying-wages/record-keeping) ·
+[Fair Work Act 2009 s.535](https://classic.austlii.edu.au/au/legis/cth/consol_act/fwa2009114/s535.html) ·
+[Fair Work Information Statement](https://www.fairwork.gov.au/employment-conditions/information-statements/fair-work-information-statement) ·
+[Casual Employment Information Statement](https://www.fairwork.gov.au/employment-conditions/information-statements/casual-employment-information-statement) ·
+[OAIC — Employee records exemption](https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations-and-government-agencies/organisations/employee-records-exemption)
+
+---
+
+## Zero Trust, and where it actually bites
+
+Zero Trust is three claims — *verify explicitly, least privilege, assume
+breach* — and the honest way to describe an app against them is to say which
+were already true, which were not, and what the remaining gaps are.
+
+### Verify explicitly
+
+Nothing is trusted for where it came from. There is no "internal" side of this
+app: the desktop workspace, the phone app, `curl`, and a stolen session all
+arrive at the same database and are asked the same question.
+
+- **Every request re-proves the caller.** The session cookie is refreshed in
+  middleware, but the middleware is only a redirect for people who are
+  obviously signed out — it reads the cookie without a round trip because it
+  runs on every request including prefetches. The authoritative check is
+  `requireSession`/`requireCapability` per route, which verifies with the auth
+  service, and then RLS, which re-derives the caller from the JWT on every
+  single statement. A forged cookie gets past the redirect and fails twice.
+- **One door in.** Sign in used to happen in the browser, straight against the
+  auth service. That works and leaves nowhere to stand: the app never learns a
+  password was guessed wrong. [`/api/auth/sign-in`](apps/desktop/src/app/api/auth/sign-in/route.ts)
+  now fronts it — same session cookies, one extra hop, and three things that
+  were impossible before.
+- **The refusal says nothing.** Wrong password and unknown address return the
+  same sentence. Telling them apart enumerates who works here.
+- **A tampered token is refused, not ignored.** Verified in the checks by
+  mutating the last four characters of a real JWT: `401`, not an empty result.
+
+### Least privilege
+
+- **Permissions are enforced where the data is**, not in the components. 58
+  capabilities decide what the UI offers; RLS policies and `has_permission()`
+  decide what the database will do. The client-side check is UX.
+- **Editing somebody and granting them access are different permissions.**
+  `updateEmployeeAction` used to take a free-form patch, so changing a job
+  title and handing out administrative access were one call. Role assignment
+  is now stripped out with the other identity fields and put back only for a
+  caller holding `user.role_management`.
+- **Server Actions are HTTP endpoints, and are treated as such.** Several take
+  a patch object and hand it to an update; that object comes from the network,
+  not from the form. [`safePatch()`](apps/desktop/src/lib/actions.ts) strips the
+  fields that say *who a row belongs to* and *where it came from* —
+  `organisation_id`, `owner_id`, `user_id`, `created_by`, `version`,
+  `retain_until` and the rest — before the request is made. RLS would catch
+  most of it; this stops the app sending it in the first place. It is a
+  denylist, which is the weaker shape: it covers every table at once, where a
+  per-table allow-list would be stricter but has to stay right about columns
+  nobody remembers to update.
+- **Column guards, not just row guards.** RLS is row-level; it cannot say "you
+  may update this row but not that column". Six `BEFORE UPDATE` triggers do
+  that job — an employee editing their own profile cannot change their role,
+  their manager, their start date or their employment basis; a retention date
+  cannot be shortened; a read receipt cannot be pointed at a different version.
+
+### Assume breach
+
+- **The page is treated as a place code might run.** A
+  [Content-Security-Policy](apps/desktop/next.config.mjs) plus `X-Frame-Options`,
+  `nosniff`, `strict-origin-when-cross-origin`, a `Permissions-Policy` that
+  denies camera, microphone and location, and HSTS in production. `frame-ancestors
+  'none'` matters more here than it looks: this app is full of one-click approval
+  buttons, which is exactly the shape clickjacking wants.
+- **`unsafe-inline` is still there, and it is not decoration.** The theme is
+  applied by an inline script before first paint so the page does not flash the
+  wrong colour scheme, and Next inlines its own bootstrap. A nonce would remove
+  it and would mean giving up static rendering on every route that has one.
+- **Repeated guessing is cut off — below both apps, not inside one.** The first
+  version of this counted failures in the web app's sign-in route, which meant
+  it did not exist for the phone app, or for anything else holding the anon
+  key. An attacker is not going to use our front door. It is now a
+  [GoTrue password verification hook](supabase/migrations/20260825000300_sign_in_hook.sql):
+  the auth service calls it on every password attempt before issuing a session,
+  whichever client is asking, and there is no way in that skips it. Five
+  failures in fifteen minutes and the account stops answering. The window rolls
+  forward on its own; nothing is unlocked by hand.
+- **Counted per account, not per address.** An attacker moves between addresses
+  far more cheaply than a person changes accounts. An address nobody works
+  under accumulates nothing at all — the hook only fires where there is a user
+  to verify a password against, so there is no list of guessed addresses to
+  read and no table to fill with garbage.
+- **A stolen session is the failure this app cannot prevent, only make
+  visible.** Every attempt is recorded and shown to the person it belongs to —
+  when, which app, what device, what time zone, from where. Rows are written by
+  the hook, not by any client; there is no insert, update or delete policy at
+  all, so a session cannot forge a sign in that never happened or bury one that
+  did.
+
+![Recent sign-ins](docs/screenshots/d12-sign-ins.png)
+
+### One history, both apps
+
+The sign-in history is not per-app. `sign_in_events` is one table keyed by the
+person, and both clients read every row belonging to the caller: sign in on the
+phone and it is on the desktop list, and the other way round.
+
+What the hook cannot see is the network — a database function called by the
+auth service has no idea which address or which browser asked. So the two
+halves of a row come from different places:
+
+| Written by | What it knows |
+|---|---|
+| The auth hook | The attempt itself — who, when, whether the password was right |
+| The web route | The address and the browser, filled in afterwards with the service key |
+| The phone app | Which app it is, the device, and the clock — stamped through `describe_my_sign_in` |
+
+The phone has no service key and should not have one, so it labels its own row
+through a function that is deliberately narrow: **your own** most recent
+attempt, **only** if nothing has described it yet, and **only** within a minute
+of it happening. A described row cannot be relabelled. The worst a compromised
+session can do with it is mislabel the sign in it just made, which it could
+have done anyway by lying about its user agent.
+
+A sign in with no label at all is shown as such rather than dressed up — that
+is what an attempt from something that is neither app looks like, and it should
+stand out.
+
+**Time zone is reported by the device, never geolocated from the IP.** Two
+reasons. Resolving an address to a place means sending your staff's addresses
+to a third party to find out where they are, which is not a thing to do quietly
+to your own people — and it would need a hole in the CSP to do it from the
+page. It is also simply better evidence: the clock the person is actually
+working to, rather than a guess from a network route.
+
+### Session and activity monitoring
+
+When somebody says *"I think we have had a breach"*, the hour that follows is
+three questions — whose account, from where, and what was touched. A
+Super Administrator can answer all three at **Monitoring**.
+
+There was already an activity log, and it was **not** an audit trail, for two
+reasons that are each fatal on their own:
+
+- It was written by the *client* — application code remembering to call
+  `logActivity` after doing something. Twelve actions were covered out of
+  everything the app can do, and anything reaching the database another way
+  wrote nothing at all.
+- Its insert policy let any signed-in user add rows naming themselves as the
+  actor. A record somebody can compose is a record, not evidence.
+
+[`audit_log`](supabase/migrations/20260825000600_audit_trail.sql) replaces it.
+Triggers on seventeen tables record every insert, update and delete with the
+actor, the subject, and — for an update — **only the fields that actually
+changed, before and after**. It does not depend on the app being well behaved:
+a change made with `curl` is recorded identically, which the checks prove by
+making one. An update that changed nothing is skipped, so the ones that matter
+are not buried. There is no insert, update or delete policy, so nothing can be
+added by hand, pinned on somebody else, or removed.
+
+![Session and activity monitoring](docs/screenshots/d14-monitoring.png)
+
+Three readerships, and the design is the argument:
+
+| Who | Sees |
+|---|---|
+| **Super Administrator** | The whole workspace — the role that answers to the OAIC and to the people affected |
+| **Everybody else, admins included** | What was done *to them*, and nothing about anybody else |
+| **An admin who is not a Super Administrator** | Exactly what an employee sees. They are the population this exists to hold to account |
+
+**Opening it requires saying why, and the saying is recorded** — on a third tab,
+where the people being looked at can see it. So can any employee whose own
+history was the subject. That is not ceremony: an investigative power nobody
+can audit is indistinguishable from surveillance, and the people most able to
+abuse this page are the only ones who can see it. Exporting is a look too, and
+is recorded as one — a copy taken quietly would defeat the point of recording
+the ones taken loudly.
+
+Both views export to CSV, because a notification to the OAIC and to affected
+individuals is a document, and the evidence behind it has to leave the app in a
+form a lawyer or a regulator can read.
+
+### What is *not* covered, stated plainly
+
+- **No MFA.** The single largest remaining gap. Supabase supports TOTP
+  enrolment; this app does not use it.
+- **Tokens live in cookies the page's own JavaScript can read.** That is the
+  `@supabase/ssr` design and the client components depend on it — uploading a
+  document, acknowledging a policy and previewing a file all talk to Supabase
+  from the browser. Marking the cookies `httpOnly` would sign those features
+  out. The mitigation is the CSP above and the fact that a stolen token still
+  reaches only what RLS allows that user.
+- **The audit trail costs a trigger on every write** to seventeen tables. Fine
+  at this size; it is the kind of thing to measure before a workspace with
+  thousands of people, and the kind of table that needs a retention policy of
+  its own eventually.
+- **`client`, `device` and `time_zone` are self-reported.** They are labelled
+  as hints in the schema and should be read as hints. The address is no better
+  — it comes from a proxy header and is trivially spoofed. None of them grant
+  anything; they exist so a person can recognise a sign in that was not them.
+- **No device posture, no continuous risk scoring.** The nearest thing is real
+  and load-bearing but narrower: capability is decided by role *and platform*,
+  so an approval that must be recorded against somebody's name is refused on a
+  phone regardless of who is asking.
+- **Rate limiting is per instance for reads.** The sign-in limiter counts in
+  the database and so survives a restart and works across instances; nothing
+  else is throttled at the app layer.
+
+---
+
 ## Roles and permissions
 
 A role carries two things:
@@ -355,6 +687,82 @@ resolve from **role × platform × granted permissions** to one of
 Where a workflow exists but is desktop-only, mobile says so plainly rather than
 hiding it: *"This workspace is optimised for desktop. Open Snoopy Workplace on a
 larger screen to manage this feature."*
+
+---
+
+## Who opened my files
+
+Personal documents include the ones people mind most: a passport scan attached
+to a certificate, a signed contract, a medical note. Any HR user could open
+them, and nothing recorded that they had — so *"who has looked at my file?"* had
+no answer.
+
+[`20260824000200_document_access_log.sql`](supabase/migrations/20260824000200_document_access_log.sql)
+adds `document_access_log`, written by a `SECURITY DEFINER` function and by
+nothing else: no insert, update or delete policy exists, because a log somebody
+can edit is not a log. Reads are routed through one chokepoint —
+`documentService.getDownloadUrl()`, which both clients already used — so signing
+a URL in the browser still records the opening.
+
+The database decides what is worth recording:
+
+- **Opening somebody else's personal document** — logged, with who, whose, what
+  and when.
+- **Opening your own file** — not logged. Nobody else's business, and a log full
+  of self-reads is a log nobody reads.
+- **Opening a shared document** — not logged. The handbook is published *to*
+  everybody; recording who read it is surveillance, not a control.
+
+![Who opened my files](docs/screenshots/24-access-log.png)
+
+The subject sees the list on their own profile, and it appears in their History
+on the desktop record. A line manager does not: knowing who read your contract
+is not line-management information.
+
+## Reading a document without leaving
+
+"Open" hands the file to the browser: a new tab, a download folder, a copy of a
+contract sitting in `~/Downloads` on a shared machine. For a quick look — *is
+this the signed version? is the date right?* — that is the wrong trade. **Preview**
+renders the file in place instead.
+
+The renderer is [flyfish-dev/file-viewer](https://github.com/flyfish-dev/file-viewer)
+(Apache-2.0), which previews PDF, Office, images, Markdown, archives and about
+thirty other families **in the browser** — no conversion service, no third-party
+upload, nothing leaving the machine that was not already leaving it. That
+matters more here than the format list: the alternative to a browser-native
+viewer is posting people's contracts to somebody else's server.
+
+![Previewing a document in place](docs/screenshots/d11-preview.png)
+
+Three things it is wired into rather than bolted beside:
+
+- **The same chokepoint.** Preview calls `documentService.getDownloadUrl()`, so
+  looking at a personal document on screen writes the same audit row as
+  downloading it. Reading is reading. The link is signed for five minutes
+  rather than the usual sixty seconds, because the viewer fetches large files
+  in ranges and a link that expires mid-read fails halfway through.
+- **The stored file name, not the display name.** The viewer picks its renderer
+  from the extension; "Employment Agreement" has none.
+- **The workspace's theme.** An explicit Light or Dark choice is passed through,
+  so the viewer's own toolbar does not arrive in the opposite colour scheme.
+
+The runtime is ~179 MB of workers, WASM and fonts, so it is **not** committed —
+`npm install` regenerates it into `apps/desktop/public/file-viewer/` via
+`npm run assets:viewer`, and only the pipeline a given file needs is fetched at
+runtime. Two build notes, both in
+[`next.config.mjs`](apps/desktop/next.config.mjs): Node built-ins are stubbed
+out of the browser bundle (isomorphic helpers branch on `process.versions.node`
+and webpack resolves the branch a browser never takes), and pdf.js — itself a
+webpack bundle — has its inner `__webpack_require__` renamed by a
+[four-line loader](apps/desktop/scripts/rename-bundled-webpack-globals.cjs),
+without which the nested names shadow the outer runtime and the module dies on
+its first line. Production hid that one, because minification renames those
+names as a side effect; development did not.
+
+Mobile keeps handing files to the system viewer — the package targets the web,
+and iOS and Android already preview a PDF better than anything shipped inside
+the app would.
 
 ---
 
@@ -551,9 +959,32 @@ pages — nothing is mocked, so a failure there is a failure a user would hit:
   registered device; somebody with no device queues nothing; nobody can write to
   either queue, redirect one, register a device for somebody else, or read
   another person's token; a dry run leaves both queues untouched.
+- **Employment records** — the record says what kind of employment it is and
+  refuses the contradiction; an employee cannot rewrite their own basis; a
+  personal document is stamped with seven years and cannot be deleted inside
+  them, its retention cannot be shortened but can be extended, and a shared
+  document is not anybody's record; the statements a casual is owed accrue
+  repeatedly and everybody else's once, and what was handed over cannot be
+  edited, withdrawn, or recorded by the employee themselves.
+- **Zero Trust** — the workspace cannot be framed, sniffed, re-based or made to
+  post elsewhere; an unauthenticated page is not served; a valid session reaches
+  nothing in another workspace and a tampered token is refused outright; five
+  wrong passwords cut the account off **whether they go through the web route or
+  straight at the auth service**, which is what proves the phone app is covered;
+  an address nobody works under accumulates nothing; the refusal never says
+  whether an address exists; and a session can neither forge a sign-in that
+  never happened nor remove one that did.
+- **Monitoring** — a change made with `curl`, outside the app entirely, is still
+  recorded with its actor, its subject and the fields that changed; an update
+  that changed nothing is not; an ordinary admin sees only what was done to
+  them, and nothing about a colleague they can edit; no entry can be added by
+  hand, re-pinned or deleted; looking requires a reason; and the person looked
+  at can see that they were looked at.
 
-`npm run check` resets the demo data before it runs, because the progress check
-completes real courses, tasks and onboarding steps.
+The suite runs **32 groups and 524 assertions** end to end. `npm run
+check` resets the demo data before it runs, because the progress check completes
+real courses, tasks and onboarding steps — and because several of the records it
+creates are, by design, ones nobody is allowed to delete.
 
 ---
 

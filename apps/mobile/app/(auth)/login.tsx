@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  fieldErrors, friendlyError, initials, loginSchema, PRODUCT_NAME, PRODUCT_SUBTITLE,
+  authService, fieldErrors, friendlyError, initials, loginSchema, PRODUCT_NAME, PRODUCT_SUBTITLE,
 } from '@snoopy/shared';
 import { SnoopyMark } from '@/components/Snoopy';
 import { Button, ErrorNotice } from '@/components/ui';
@@ -35,7 +35,24 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const { error } = await supabase.auth.signInWithPassword(parsed.data);
-      if (error) { setFormError(friendlyError(error)); setBusy(false); }
+      if (error) { setFormError(friendlyError(error)); setBusy(false); return; }
+      /*
+       * Say which app this was, so the one history both apps read can tell a
+       * phone from a laptop — "Unknown device" is no use for spotting the sign
+       * in that was not you. The clock the phone is set to goes with it, for
+       * the same reason and by the same rule as on the web: reported by the
+       * device, never looked up from the address.
+       *
+       * After the session exists, because the database only lets somebody
+       * describe their own most recent attempt. Best effort — a sign in must
+       * not fail because a label did not stick.
+       */
+      await authService.describeThisSignIn(
+        supabase,
+        'Phone app',
+        `${Platform.OS === 'ios' ? 'iOS' : Platform.OS === 'android' ? 'Android' : 'Web'} ${Platform.Version}`,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+      );
       // On success the auth listener in AuthProvider navigates away.
     } catch (thrown) {
       // A request that never reaches the backend rejects rather than returning

@@ -1358,9 +1358,23 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .timeline-credential { border-left-color: var(--warn); }
 .timeline-document   { border-left-color: var(--info); }
 .timeline-training   { border-left-color: var(--ok); }
+/* Somebody read this person's file. Marked in the accent because it is the one
+   entry the subject scans for. */
+.timeline-access     { border-left-color: var(--accent); }
 
 .timeline-when { font-size: 12.5px; }
 
 @media (max-width: 720px) {
   .timeline-item { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* ------------------------------------------------------------------ preview */
+/* A document needs the room a form does not, so the panel holding one grows.
+   Scoped by what it contains, so the shared modal keeps its own size. */
+.modal:has(.preview-frame) { width: min(1100px, 94vw); max-height: 92vh; }
+.modal:has(.preview-frame) .panel-body { padding: 0; flex: 1; overflow: hidden; }
+.preview-frame {
+  height: min(74vh, 780px); display: flex; align-items: center; justify-content: center;
+  background: var(--surface-muted);
+}
+.preview-frame > p { margin: 0; }

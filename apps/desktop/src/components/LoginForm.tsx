@@ -2,8 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
-import { fieldErrors, friendlyError, initials, loginSchema } from '@snoopy/shared';
-import { getBrowserSupabase } from '@/lib/supabase-browser';
+import { fieldErrors, initials, loginSchema } from '@snoopy/shared';
 
 const DEMO_ACCOUNTS = [
   { email: 'lucy@peanutsstudio.test', who: 'Lucy van Pelt', where: 'Admin · Peanuts Creative Studio' },
@@ -33,9 +32,31 @@ function Form() {
     setErrors({});
     setBusy(true);
 
-    const { error } = await getBrowserSupabase().auth.signInWithPassword(parsed.data);
-    if (error) {
-      setFormError(friendlyError(error));
+    /*
+     * Sign in goes through this app's own route rather than straight to the
+     * auth service, so that failed attempts are counted somewhere the browser
+     * cannot edit and repeated guessing can be slowed down. The session it
+     * hands back is the same one; only the door changed.
+     */
+    const response = await fetch('/api/auth/sign-in', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      /*
+       * The browser's own time zone, sent with the attempt. It is not looked
+       * up from the address: resolving an IP to a place means handing somebody
+       * else your staff's addresses, and the clock the device is actually set
+       * to is better evidence anyway. Shown back only to the account holder,
+       * and to a Super Administrator investigating a breach.
+       */
+      body: JSON.stringify({
+        ...parsed.data,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+    }).catch(() => null);
+
+    if (!response?.ok) {
+      const body = await response?.json().catch(() => null);
+      setFormError(body?.error ?? 'Could not reach the server. Check your connection and try again.');
       setBusy(false);
       return;
     }

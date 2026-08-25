@@ -42,10 +42,10 @@ export default function RequestsScreen() {
   const outstanding = requests.filter((r) => r.status !== 'Accepted');
   const settled = requests.filter((r) => r.status === 'Accepted');
 
-  async function open(storagePath: string) {
+  async function open(storagePath: string, documentId?: string) {
     setActionError(null);
     try {
-      await Linking.openURL(await documentService.getDownloadUrl(supabase, storagePath, 120));
+      await Linking.openURL(await documentService.getDownloadUrl(supabase, storagePath, 120, documentId));
     } catch (e) {
       setActionError(friendlyError(e));
     }
@@ -118,7 +118,7 @@ export default function RequestsScreen() {
           {request.template ? (
             <Button
               label="Download the form" variant="secondary" style={{ flex: 1 }}
-              onPress={() => open(request.template!.storage_path)}
+              onPress={() => open(request.template!.storage_path, request.template!.id)}
             />
           ) : null}
           {canSubmit && request.status !== 'Accepted' ? (

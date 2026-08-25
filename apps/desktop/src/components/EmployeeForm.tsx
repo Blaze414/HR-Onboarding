@@ -31,6 +31,9 @@ export function EmployeeForm({
     department_id: employee?.department_id ?? '',
     manager_id: employee?.manager_id ?? '',
     start_date: employee?.start_date ?? '',
+    end_date: employee?.end_date ?? '',
+    employment_hours: (employee?.employment_hours ?? 'Full-time') as string,
+    employment_basis: (employee?.employment_basis ?? 'Ongoing') as string,
     phone: employee?.phone ?? '',
   });
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -56,6 +59,9 @@ export function EmployeeForm({
             department_id: form.department_id || null,
             manager_id: form.manager_id || null,
             start_date: form.start_date || null,
+            end_date: form.end_date || null,
+            employment_hours: form.employment_hours,
+            employment_basis: form.employment_basis,
             phone: form.phone || null,
           })
         : createEmployeeAction({
@@ -132,6 +138,49 @@ export function EmployeeForm({
           <input className="input" value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} />
         </Field>
       </div>
+
+      {/*
+        * Both halves are required particulars of an employee record under the
+        * Fair Work Regulations, and the second one decides what the workspace
+        * owes this person afterwards: a casual is owed the Casual Employment
+        * Information Statement again and again, and nobody else is. Choosing
+        * Casual on one side sets the other, because they cannot disagree —
+        * the database refuses the contradiction rather than storing it.
+        */}
+      <div className="grid grid-2">
+        <Field label="Hours" hint="Full-time, part-time or casual.">
+          <select
+            className="select" value={form.employment_hours}
+            onChange={(e) => setForm((f) => ({
+              ...f,
+              employment_hours: e.target.value,
+              employment_basis: e.target.value === 'Casual' ? 'Casual'
+                : f.employment_basis === 'Casual' ? 'Ongoing' : f.employment_basis,
+            }))}
+          >
+            {['Full-time', 'Part-time', 'Casual'].map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </Field>
+        <Field label="Basis" hint="Ongoing, fixed term or casual.">
+          <select
+            className="select" value={form.employment_basis}
+            onChange={(e) => setForm((f) => ({
+              ...f,
+              employment_basis: e.target.value,
+              employment_hours: e.target.value === 'Casual' ? 'Casual'
+                : f.employment_hours === 'Casual' ? 'Full-time' : f.employment_hours,
+            }))}
+          >
+            {['Ongoing', 'Fixed term', 'Casual'].map((v) => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </Field>
+      </div>
+
+      {employee ? (
+        <Field label="End date" hint="The day employment ended. Part of the record, so it is kept whether or not the account is still active.">
+          <input className="input" type="date" value={form.end_date ?? ''} onChange={(e) => set('end_date', e.target.value)} />
+        </Field>
+      ) : null}
 
       {!employee && (onboardingTemplates.length > 0 || checklists.length > 0 || courses.length > 0) ? (
         <section className="first-week">

@@ -276,6 +276,14 @@ max_frequency = "5s"
 # Force log out if the user has been inactive longer than the specified duration.
 # inactivity_timeout = "8h"
 
+# Runs on every password sign-in attempt, whichever client is asking — the web
+# workspace, the phone app, or anything else holding the anon key. It records
+# the attempt and refuses one that comes after too many failures, so the limit
+# sits below both apps rather than inside one of them.
+[auth.hook.password_verification_attempt]
+enabled = true
+uri = "pg-functions://postgres/public/password_verification_attempt"
+
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
 # [auth.hook.before_user_created]
 # enabled = true

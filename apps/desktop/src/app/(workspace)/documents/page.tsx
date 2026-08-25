@@ -21,13 +21,14 @@ export default async function DocumentsPage({
   const db = await getServerSupabase();
   const isAdmin = session.profile.role === 'admin';
 
-  const [documents, acknowledged] = await Promise.all([
+  const [documents, acknowledged, everRead] = await Promise.all([
     documentService.listDocuments(db, session.userId, {
       search: q,
       category: category ?? 'All',
       scope: (scope as any) ?? 'all',
     }),
     acknowledgementService.mine(db, session.userId),
+    acknowledgementService.everRead(db, session.userId),
   ]);
 
   const requests = await documentRequestService.mine(db, session.userId);
@@ -36,6 +37,8 @@ export default async function DocumentsPage({
   // at the top: it is the only thing on this page that is asking something of
   // the reader rather than waiting to be searched for.
   const owed = documents.filter((d) => d.requires_acknowledgement && !acknowledged.has(d.id));
+  // Owed because the document changed, rather than because it was never read.
+  const reissued = owed.filter((d) => everRead.has(d.id)).length;
 
   return (
     <>
@@ -63,7 +66,12 @@ export default async function DocumentsPage({
         <div className="ack-prompt" role="status">
           <div>
             <strong>{owed.length} {owed.length === 1 ? 'document needs' : 'documents need'} your acknowledgement</strong>
-            <span>Read {owed.length === 1 ? 'it' : 'them'} and confirm below. Your name and the time are recorded.</span>
+            <span>
+              {reissued > 0
+                ? `${reissued === owed.length ? (reissued === 1 ? 'It has' : 'They have') : `${reissued} of them have`} changed since you last confirmed. `
+                : ''}
+              Read {owed.length === 1 ? 'it' : 'them'} and confirm below. Your name and the time are recorded.
+            </span>
           </div>
         </div>
       ) : null}
@@ -98,7 +106,11 @@ export default async function DocumentsPage({
                 <td className="subtle nowrap">{formatDate(d.created_at)}</td>
                 <td>
                   {d.requires_acknowledgement ? (
-                    <AcknowledgeDocument documentId={d.id} acknowledged={acknowledged.has(d.id)} />
+                    <AcknowledgeDocument
+                      documentId={d.id}
+                      acknowledged={acknowledged.has(d.id)}
+                      updatedSinceRead={!acknowledged.has(d.id) && everRead.has(d.id)}
+                    />
                   ) : (
                     <span className="subtle">Not required</span>
                   )}

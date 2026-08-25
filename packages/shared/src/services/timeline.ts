@@ -15,7 +15,7 @@ import type { Db } from '../supabase';
 export interface TimelineEntry {
   id: string;
   at: string;
-  kind: 'credential' | 'document' | 'training' | 'onboarding' | 'acknowledgement' | 'activity';
+  kind: 'credential' | 'document' | 'training' | 'onboarding' | 'acknowledgement' | 'activity' | 'access';
   title: string;
   detail?: string;
   /** Who did it, when it was somebody other than the employee. */
@@ -35,7 +35,7 @@ const labelOf = (value: unknown): string | null => {
 export async function loadTimeline(
   db: Db, employeeId: string, limit = 60,
 ): Promise<TimelineEntry[]> {
-  const [credentials, requests, assignments, steps, acknowledgements, activity] = await Promise.all([
+  const [credentials, requests, assignments, steps, acknowledgements, activity, access] = await Promise.all([
     db.from('employee_credentials')
       .select('id, title, status, created_at, verified_at, review_note, verifier:profiles!employee_credentials_verified_by_fkey(name)')
       .eq('employee_id', employeeId),
@@ -56,6 +56,14 @@ export async function loadTimeline(
       .select('id, action, entity_type, metadata, created_at, actor:profiles!activity_log_actor_id_fkey(name)')
       .eq('actor_id', employeeId)
       .order('created_at', { ascending: false })
+      .limit(limit),
+    // Who opened this person's files. Read through the caller's own session
+    // like everything else here, so it appears for the subject and for whoever
+    // may see the whole workspace, and for nobody in between.
+    db.from('document_access_log')
+      .select('id, document_name, opened_at, actor:profiles!document_access_log_actor_id_fkey(name)')
+      .eq('subject_id', employeeId)
+      .order('opened_at', { ascending: false })
       .limit(limit),
   ]);
 
@@ -142,6 +150,15 @@ export async function loadTimeline(
       id: `act-${row.id}`, at: row.created_at, kind: 'activity',
       title: String(row.action).replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()),
       detail: subject ? String(subject) : undefined,
+    });
+  }
+
+  for (const row of access.data ?? []) {
+    push({
+      id: `access-${row.id}`, at: row.opened_at, kind: 'access',
+      title: `Opened ${row.document_name}`,
+      detail: 'A personal document was viewed.',
+      actor: labelOf(row.actor),
     });
   }
 

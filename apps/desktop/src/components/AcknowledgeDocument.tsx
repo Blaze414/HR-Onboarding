@@ -11,8 +11,8 @@ import { useAction } from './Interactive';
  * about a moment, so once given it is stated rather than offered again.
  */
 export function AcknowledgeDocument({
-  documentId, acknowledged,
-}: { documentId: string; acknowledged: boolean }) {
+  documentId, acknowledged, updatedSinceRead = false,
+}: { documentId: string; acknowledged: boolean; updatedSinceRead?: boolean }) {
   const { busy, error, call } = useAction();
 
   if (acknowledged) {
@@ -30,8 +30,10 @@ export function AcknowledgeDocument({
         disabled={busy}
         onClick={() => call(() => acknowledgeDocumentAction(documentId))}
       >
-        {busy ? 'Recording…' : 'I have read this'}
+        {busy ? 'Recording…' : updatedSinceRead ? 'I have read the new version' : 'I have read this'}
       </button>
+      {/* Read an older version: a different sentence to "never seen it". */}
+      {updatedSinceRead ? <span className="subtle">Updated since you read it</span> : null}
       {error ? <span className="subtle" role="alert">{error}</span> : null}
     </>
   );

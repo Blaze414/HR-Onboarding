@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   documentRequestService,
-  analyticsService, courseService, documentService, employeeService,
+  analyticsService, authService, courseService, documentService, employeeService,
   EMPTY_STATES, formatDate, formatDateTime, formatRelativeDay, loadTimeline, onboardingService,
   roleService,
   taskService,
@@ -52,6 +52,9 @@ export default async function EmployeeDetailPage({
   if (!employee) notFound();
 
   const progress = await analyticsService.getEmployeeProgress(db, id);
+  // Read through this admin's own session, so the row policy — the person and
+  // HR, nobody else — is what decides whether it appears.
+  const emergencyContact = await authService.loadEmergencyContact(db, id);
   const current = tab === 'overview' ? `/employees/${id}` : `/employees/${id}?tab=${tab}`;
 
   return (
@@ -99,7 +102,7 @@ export default async function EmployeeDetailPage({
         current={current}
       />
 
-      {tab === 'overview' ? <Overview employee={employee} progress={progress} /> : null}
+      {tab === 'overview' ? <Overview employee={employee} progress={progress} emergencyContact={emergencyContact} /> : null}
       {tab === 'courses' ? <CoursesTab db={db} id={id} /> : null}
       {tab === 'tasks' ? <TasksTab db={db} id={id} /> : null}
       {tab === 'onboarding' ? <OnboardingTab db={db} id={id} /> : null}
@@ -110,7 +113,7 @@ export default async function EmployeeDetailPage({
   );
 }
 
-function Overview({ employee, progress }: { employee: any; progress: any }) {
+function Overview({ employee, progress, emergencyContact }: { employee: any; progress: any; emergencyContact: any }) {
   return (
     <>
       <div className="grid grid-4" style={{ marginBottom: 18 }}>
@@ -135,7 +138,27 @@ function Overview({ employee, progress }: { employee: any; progress: any }) {
             <dt>Manager</dt><dd>{employee.manager?.name ?? '—'}</dd>
             <dt>Role</dt><dd><StatusBadge status={employee.role} /></dd>
             <dt>Start date</dt><dd>{formatDate(employee.start_date)}</dd>
+            {/* Required particulars of an employee record — Fair Work
+                Regulations 2009 reg 3.32. Shown as one line because they are
+                one fact: what kind of employment this is. */}
+            <dt>Employment</dt>
+            <dd>
+              {employee.employment_hours && employee.employment_basis
+                ? employee.employment_hours === 'Casual'
+                  ? 'Casual'
+                  : `${employee.employment_hours} · ${employee.employment_basis}`
+                : <span className="warn">Not recorded — required on an employee record.</span>}
+            </dd>
+            {employee.end_date ? <><dt>End date</dt><dd>{formatDate(employee.end_date)}</dd></> : null}
             <dt>Phone</dt><dd>{employee.phone ?? '—'}</dd>
+            {/* Kept by the person, not by HR. Shown here because this is the
+                screen somebody opens when they need it in a hurry. */}
+            <dt>In an emergency</dt>
+            <dd>
+              {emergencyContact
+                ? `${emergencyContact.name}${emergencyContact.relationship ? ` (${emergencyContact.relationship})` : ''} · ${emergencyContact.phone}`
+                : 'Not recorded — ask them to add one from their profile.'}
+            </dd>
           </dl>
         </Card>
 

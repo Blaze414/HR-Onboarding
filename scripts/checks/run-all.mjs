@@ -37,6 +37,12 @@ const checks = [
   ['Saved views name a filter, not a grant', 'saved-views.mjs', []],
   ['Reminders leave the building', 'email-outbox.mjs', []],
   ['Reminders reach a shut phone', 'push-outbox.mjs', []],
+  ['A read receipt names a version', 'policy-versions.mjs', []],
+  ['You own your details, HR owns the rest', 'profile-self-service.mjs', []],
+  ['Opening a file leaves a trace', 'document-access-log.mjs', []],
+  ['The record says what kind of employment it is', 'employment-record.mjs', []],
+  ['Nothing is trusted for where it came from', 'zero-trust.mjs', []],
+  ['Every change is on the record, and so is every look', 'monitoring.mjs', []],
   ['Filters actually filter', 'filters.mjs', []],
   ['Every device can reach the backend', 'backend-url.mjs', []],
   ['Sign in fails loudly, never hangs', 'signin-timeout.mjs', []],
@@ -71,7 +77,23 @@ for (const [label, file, args] of checks) {
     ['--experimental-strip-types', '--no-warnings', path.join(here, file), ...args],
     { stdio: 'inherit' },
   );
-  if (result.status !== 0) failed += 1;
+  if (result.status !== 0) {
+    failed += 1;
+    /*
+     * A group can fail three ways and they need different responses: an
+     * assertion that did not hold, a process that threw, and a process that was
+     * killed — which prints nothing at all and otherwise looks identical to the
+     * first two. Saying which turns "1 check group(s) failed" with a clean log
+     * above it into something actionable.
+     */
+    if (result.signal) {
+      console.error(`\n   ↳ ${label}: killed by ${result.signal} — not an assertion failure.`);
+    } else if (result.error) {
+      console.error(`\n   ↳ ${label}: could not run — ${result.error.message}`);
+    } else {
+      console.error(`\n   ↳ ${label}: exited ${result.status}.`);
+    }
+  }
 }
 
 console.log(failed === 0 ? '\nAll checks passed.' : `\n${failed} check group(s) failed.`);

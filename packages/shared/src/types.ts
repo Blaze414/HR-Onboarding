@@ -51,6 +51,12 @@ export interface Profile {
   department_id: string | null;
   manager_id: string | null;
   start_date: string | null;
+  /** The day employment ended. A required particular in its own right. */
+  end_date: string | null;
+  /** Full-time, part-time or casual — Fair Work Regulations 2009 reg 3.32(c). */
+  employment_hours: 'Full-time' | 'Part-time' | 'Casual' | null;
+  /** Ongoing, fixed term or casual — the same regulation, the other half. */
+  employment_basis: 'Ongoing' | 'Fixed term' | 'Casual' | null;
   phone: string | null;
   is_active: boolean;
   created_at: string;
@@ -133,6 +139,9 @@ export interface EventParticipant {
 export interface DocumentRecord {
   /** Staff must record that they have read this. */
   requires_acknowledgement?: boolean;
+  /** Bumped by the database whenever the stored file is replaced. Read receipts
+   *  are recorded against it, so a new version retires the old ones. */
+  version?: number;
   id: string;
   organisation_id: string;
   /** null = shared organisation document, otherwise the owning user. */
@@ -145,6 +154,8 @@ export interface DocumentRecord {
   file_type: string | null;
   description: string | null;
   created_at: string;
+  /** Earliest day this may be destroyed — seven years, Fair Work reg 3.31. */
+  retain_until?: string;
   owner?: Pick<Profile, 'id' | 'name'> | null;
 }
 
@@ -319,6 +330,7 @@ export interface OutstandingRequiredTraining {
 export type PlanKind = 'Onboarding' | 'Offboarding';
 
 export interface OutstandingAcknowledgement {
+  document_version?: number;
   document_id: string;
   organisation_id: string;
   document_name: string;
@@ -468,4 +480,18 @@ export interface ExpiringCredential {
   has_expired: boolean;
   /** Whether losing it closes a department to them entirely. */
   blocks_a_department: boolean;
+}
+
+/**
+ * Who to ring. Owned by the person, readable by them and by HR only — which is
+ * why it is a table of its own rather than three columns on the staff
+ * directory.
+ */
+export interface EmergencyContact {
+  user_id: string;
+  organisation_id: string;
+  name: string;
+  relationship: string | null;
+  phone: string;
+  updated_at: string;
 }

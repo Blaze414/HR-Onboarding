@@ -42,18 +42,22 @@ export default function DocumentsScreen() {
 
   const { data, loading, refreshing, error, refresh, reload } = useLoad(
     async () => {
-      if (!profile) return { documents: [], acknowledged: new Set<string>() };
-      const [documents, acknowledged] = await Promise.all([
+      if (!profile) {
+        return { documents: [], acknowledged: new Set<string>(), everRead: new Set<string>() };
+      }
+      const [documents, acknowledged, everRead] = await Promise.all([
         documentService.listDocuments(supabase, profile.id, { scope }),
         acknowledgementService.mine(supabase, profile.id),
+        acknowledgementService.everRead(supabase, profile.id),
       ]);
-      return { documents, acknowledged };
+      return { documents, acknowledged, everRead };
     },
     [profile?.id, scope],
   );
 
   const documents = data?.documents ?? [];
   const acknowledged = data?.acknowledged ?? new Set<string>();
+  const everRead = data?.everRead ?? new Set<string>();
 
   /** Records that this person has read the document, then refreshes the list. */
   async function acknowledge(documentId: string) {
@@ -115,10 +119,10 @@ export default function DocumentsScreen() {
     }
   }
 
-  async function open(storagePath: string) {
+  async function open(storagePath: string, documentId?: string) {
     setActionError(null);
     try {
-      const url = await documentService.getDownloadUrl(supabase, storagePath, 120);
+      const url = await documentService.getDownloadUrl(supabase, storagePath, 120, documentId);
       await Linking.openURL(url);
     } catch (e) {
       setActionError(friendlyError(e));
@@ -213,7 +217,7 @@ export default function DocumentsScreen() {
             </View>
           }
           renderItem={({ item }) => (
-            <Card style={{ marginBottom: spacing.md }} onPress={() => open(item.storage_path)}>
+            <Card style={{ marginBottom: spacing.md }} onPress={() => open(item.storage_path, item.id)}>
               <Row style={{ justifyContent: 'space-between', marginBottom: 6 }}>
                 <Text style={[type.heading, { flex: 1 }]} numberOfLines={2}>{item.name}</Text>
                 <Badge label={item.category} />
@@ -226,12 +230,21 @@ export default function DocumentsScreen() {
                 acknowledged.has(item.id) ? (
                   <Text style={styles.ackDone}>✓ You acknowledged this</Text>
                 ) : (
-                  <Button
-                    label="I have read this"
-                    variant="secondary"
-                    onPress={() => acknowledge(item.id)}
-                    style={{ marginTop: spacing.md }}
-                  />
+                  <>
+                    {/* Read an older version: say so, rather than pretending
+                        they have never seen it. */}
+                    {everRead.has(item.id) ? (
+                      <Text style={styles.ackStale}>
+                        Updated since you read it{item.version ? ` — now version ${item.version}` : ''}
+                      </Text>
+                    ) : null}
+                    <Button
+                      label={everRead.has(item.id) ? 'I have read the new version' : 'I have read this'}
+                      variant="secondary"
+                      onPress={() => acknowledge(item.id)}
+                      style={{ marginTop: spacing.md }}
+                    />
+                  </>
                 )
               ) : null}
             </Card>
@@ -259,6 +272,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   },
   inputMultiline: { minHeight: 80, textAlignVertical: 'top' },
   ackDone: { marginTop: spacing.md, color: colors.ok, fontSize: 13, fontWeight: '600' },
+  ackStale: { marginTop: spacing.md, color: colors.warn, fontSize: 13, fontWeight: '600' },
   list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
   meta: { fontSize: 13, color: colors.inkMuted },
 });

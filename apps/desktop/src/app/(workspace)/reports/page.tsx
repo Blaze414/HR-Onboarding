@@ -3,9 +3,10 @@ import {
   acknowledgementService, analyticsService, courseService, credentialService, documentRequestService,
   employeeService,
   formatDate, formatDateTime, listSavedViews,
-  onboardingService, taskService,
+  onboardingService, statementService, taskService,
 } from '@snoopy/shared';
 import { ClearFilters, SelectFilter } from '@/components/Filters';
+import { RecordStatement } from '@/components/RecordStatement';
 import { SavedViews } from '@/components/SavedViews';
 import { CredentialReview } from '@/components/CredentialReview';
 import { VerificationQueue } from '@/components/VerificationQueue';
@@ -28,6 +29,7 @@ const REPORTS = [
   { key: 'required', label: 'Outstanding required training' },
   { key: 'verify', label: 'Awaiting verification' },
   { key: 'acknowledgements', label: 'Acknowledgements owed' },
+  { key: 'statements', label: 'Statements owed' },
   { key: 'documents', label: 'Documents owed' },
   { key: 'coverage', label: 'Who could cover what' },
   { key: 'expiring', label: 'Expiring credentials' },
@@ -90,6 +92,7 @@ export default async function ReportsPage({
       {report === 'required' ? <RequiredTrainingReport db={db} departmentId={department} /> : null}
       {report === 'verify' ? <VerificationReport db={db} /> : null}
       {report === 'acknowledgements' ? <AcknowledgementReport db={db} /> : null}
+      {report === 'statements' ? <StatementReport db={db} /> : null}
       {report === 'documents' ? <DocumentRequestReport db={db} departmentId={department} /> : null}
       {report === 'coverage' && canSeeCoverage ? <CoverageReport db={db} departmentId={department} /> : null}
       {report === 'expiring' && canSeeCoverage ? <ExpiringReport db={db} /> : null}
@@ -556,6 +559,53 @@ async function EventReport({ db }: { db: any }) {
           {events.length === 0 ? <tr><td colSpan={5}><EmptyState message="No events recorded." /></td></tr> : null}
         </tbody>
       </table>
+    </TableCard>
+  );
+}
+
+/**
+ * Statements the employer owes, and has not handed over.
+ *
+ * Both are Fair Work Act obligations with a deadline attached — s.125 for the
+ * Fair Work Information Statement, s.125B for the Casual Employment
+ * Information Statement — and the second falls due again and again for as long
+ * as somebody stays casual. Nothing in this report is entered by hand: every
+ * row is derived from a start date and an employment basis, so a casual hired
+ * this morning is already on it, and stays on it until somebody records that
+ * the statement was given.
+ */
+async function StatementReport({ db }: { db: any }) {
+  const rows = await statementService.listObligations(db);
+  const outstanding = rows.filter((r) => r.status === 'Overdue');
+
+  return (
+    <TableCard title={`${outstanding.length} overdue · ${rows.length} in total`}>
+      {rows.length === 0 ? (
+        <EmptyState message="No statements are due. Add a start date to an employee record and they will appear here." />
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Employee</th><th>Statement</th><th>Due</th><th>Status</th><th>Given</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={`${r.employee_id}-${r.kind}-${r.due_on}`}>
+                <td>
+                  <Link href={`/employees/${r.employee_id}`}>{r.employee_name}</Link>
+                  {r.manager_name ? <div className="subtle">Reports to {r.manager_name}</div> : null}
+                </td>
+                <td>{r.kind}</td>
+                <td className={r.status === 'Overdue' ? 'warn' : undefined}>{formatDate(r.due_on)}</td>
+                <td><StatusBadge status={r.status} /></td>
+                <td>{r.issued_at ? formatDateTime(r.issued_at) : <span className="subtle">—</span>}</td>
+                <td className="num">{r.issued_at ? null : <RecordStatement row={r} />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </TableCard>
   );
 }

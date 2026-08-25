@@ -2,7 +2,13 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { decideSurface, resolveBackendUrl, SURFACE_HOP_PARAM } from '@snoopy/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/auth'];
+/*
+ * The only paths reachable without a session. `/api/auth` is the sign-in route
+ * itself, which necessarily runs before there is anything to verify — it does
+ * its own rate limiting and records every attempt, so it is not an unguarded
+ * door, only an unauthenticated one.
+ */
+const PUBLIC_PATHS = ['/login', '/auth', '/api/auth'];
 
 /**
  * Refreshes the Supabase session cookie and keeps unauthenticated visitors out

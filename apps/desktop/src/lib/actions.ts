@@ -8,7 +8,7 @@ import {
   documentRequestService,
   notificationService,
   capabilitiesForTier, courseService, documentService, employeeService, eventService,
-  friendlyError, onboardingService, roleService, saveView, deleteSavedView, taskService,
+  friendlyError, onboardingService, roleService, saveView, deleteSavedView, statementService, taskService,
   type StepType,
 } from '@snoopy/shared';
 import { getSession, requireCapability, requireSession, sessionCan } from './session';
@@ -42,6 +42,37 @@ async function run(fn: () => Promise<string | void>, paths: string[]): Promise<A
   }
 }
 
+/**
+ * Columns no caller may set, whichever table is being written.
+ *
+ * A Server Action is an HTTP endpoint like any other: the object it receives
+ * comes from the network, not from the form, and several of these actions take
+ * a free-form patch and hand it to an update. Row level security already stops
+ * a write reaching another workspace's rows, and triggers already pin the
+ * columns that decide access — but that is the database catching something the
+ * app should not have sent. These are the fields that say *who* a row belongs
+ * to and *where it came from*; nothing legitimate on this side ever needs to
+ * change one, so they are stripped before the request is made rather than
+ * argued about afterwards.
+ *
+ * A denylist, deliberately, and its limit is worth naming: it protects identity
+ * and provenance across every table at once, where a per-table allow-list would
+ * be stricter but has to be right about columns nobody remembers to update.
+ */
+const NEVER_WRITABLE = new Set([
+  'id', 'organisation_id', 'created_at', 'created_by', 'uploaded_by',
+  'owner_id', 'user_id', 'actor_id', 'employee_id', 'issued_by',
+  'role', 'role_id', 'version', 'retain_until', 'is_system',
+]);
+
+/** The caller's patch, minus anything they had no business sending. */
+function safePatch<T extends Record<string, unknown>>(patch: T): Partial<T> {
+  if (!patch || typeof patch !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(patch).filter(([key]) => !NEVER_WRITABLE.has(key)),
+  ) as Partial<T>;
+}
+
 // ---------------------------------------------------------------- courses
 export async function createCourseAction(input: {
   title: string; description?: string; status: any; start_date?: string | null; end_date?: string | null;
@@ -63,7 +94,7 @@ export async function createCourseAction(input: {
 export async function updateCourseAction(id: string, patch: any): Promise<ActionResult> {
   await requireCapability('course.edit');
   const db = await getServerSupabase();
-  return run(() => courseService.updateCourse(db, id, patch).then(() => undefined), ['/courses', `/courses/${id}`]);
+  return run(() => courseService.updateCourse(db, id, safePatch(patch)).then(() => undefined), ['/courses', `/courses/${id}`]);
 }
 
 export async function archiveCourseAction(id: string, archived: boolean): Promise<ActionResult> {
@@ -137,7 +168,7 @@ export async function updateTaskAction(id: string, patch: any): Promise<ActionRe
   // Assigning to another person is a separate grant from writing the task.
   if (patch?.assigned_to) await requireCapability('task.assign');
   const db = await getServerSupabase();
-  return run(() => taskService.updateTask(db, id, patch).then(() => undefined), ['/tasks', `/tasks/${id}`]);
+  return run(() => taskService.updateTask(db, id, safePatch(patch)).then(() => undefined), ['/tasks', `/tasks/${id}`]);
 }
 
 export async function setTaskStatusAction(id: string, status: any): Promise<ActionResult> {
@@ -185,7 +216,7 @@ export async function updateEventAction(id: string, patch: any, participants?: s
   const session = await requireCapability('event.edit');
   const db = await getServerSupabase();
   return run(async () => {
-    await eventService.updateEvent(db, id, patch);
+    await eventService.updateEvent(db, id, safePatch(patch));
     if (participants) await eventService.setParticipants(db, session.organisationId, id, participants);
   }, ['/events', `/events/${id}`]);
 }
@@ -228,7 +259,7 @@ export async function updateDocumentAction(id: string, patch: any): Promise<Acti
   const session = await getSession();
   if (!session) return { ok: false, error: 'Your session has expired. Please sign in again.' };
   const db = await getServerSupabase();
-  return run(() => documentService.updateDocument(db, id, patch).then(() => undefined), ['/documents']);
+  return run(() => documentService.updateDocument(db, id, safePatch(patch)).then(() => undefined), ['/documents']);
 }
 
 // ---------------------------------------------------------------- onboarding
@@ -304,10 +335,23 @@ export async function deleteOnboardingAction(id: string): Promise<ActionResult> 
 
 // ---------------------------------------------------------------- employees
 export async function updateEmployeeAction(id: string, patch: any): Promise<ActionResult> {
-  await requireCapability('employee.edit');
+  const session = await requireCapability('employee.edit');
   const db = await getServerSupabase();
+
+  /*
+   * Changing somebody's role is not editing their details — it changes what
+   * they can reach — so it is stripped with the rest of the identity fields
+   * and only put back for a caller who holds the separate capability for it.
+   * Editing a job title and granting administrative access should never be
+   * the same permission, and before this they were one call.
+   */
+  const clean: Record<string, unknown> = safePatch(patch);
+  if ('role_id' in (patch ?? {}) && sessionCan(session, 'user.role_management')) {
+    clean.role_id = patch.role_id;
+  }
+
   return run(
-    () => employeeService.updateEmployee(db, id, patch).then(() => undefined),
+    () => employeeService.updateEmployee(db, id, clean).then(() => undefined),
     ['/employees', `/employees/${id}`],
   );
 }
@@ -856,4 +900,30 @@ export async function deleteSavedViewAction(id: string, path: string): Promise<A
   await requireSession();
   const db = await getServerSupabase();
   return run(() => deleteSavedView(db, id), [path]);
+}
+
+/**
+ * Record that a workplace statement was handed over.
+ *
+ * The organisation is taken from the session, never from the form: a client
+ * that can name the organisation it is writing into can write into somebody
+ * else's.
+ */
+export async function recordStatementAction(input: {
+  employeeId: string;
+  organisationId: string;
+  kind: 'Fair Work Information Statement' | 'Casual Employment Information Statement';
+  dueOn: string;
+}): Promise<ActionResult> {
+  const session = await requireCapability('employee.edit');
+  const db = await getServerSupabase();
+  return run(
+    () => statementService.recordIssue(db, {
+      employeeId: input.employeeId,
+      organisationId: session.organisationId,
+      kind: input.kind,
+      dueOn: input.dueOn,
+    }),
+    ['/reports', `/employees/${input.employeeId}`],
+  );
 }

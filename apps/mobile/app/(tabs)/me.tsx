@@ -1,12 +1,15 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  analyticsService, can, DESKTOP_ONLY_MESSAGE, formatDate, teamService,
+  analyticsService, authService, can, DESKTOP_ONLY_MESSAGE, documentService, formatDate,
+  formatDateTime, friendlyError, teamService,
 } from '@snoopy/shared';
 import { Icon } from '@/components/Icon';
 import {
   Avatar, Badge, Button, Card, ErrorNotice, ListSkeleton, Progress, RestrictedNotice, Row, SectionTitle,
+  SuccessNotice,
 } from '@/components/ui';
 import { PLATFORM, useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -18,19 +21,73 @@ export default function MeScreen() {
   const { colors, type } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth();
+
+  // The person owns these, so they edit them here rather than emailing HR. The
+  // database restores anything else an update touches.
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+  const [phone, setPhone] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactRelationship, setContactRelationship] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+
+  function openEditor() {
+    if (!profile) return;
+    setPhone(profile.phone ?? '');
+    setContactName(data?.contact?.name ?? '');
+    setContactRelationship(data?.contact?.relationship ?? '');
+    setContactPhone(data?.contact?.phone ?? '');
+    setSaveError(null);
+    setSaved(null);
+    setEditing(true);
+  }
+
+  async function save() {
+    if (!profile) return;
+    // A name with nobody to ring is not an emergency contact.
+    if (contactName.trim() && !contactPhone.trim()) {
+      setSaveError('Add a number for your emergency contact.');
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await authService.updateOwnDetails(supabase, profile.id, { phone });
+      await authService.saveEmergencyContact(supabase, {
+        userId: profile.id,
+        organisationId: profile.organisation_id,
+        name: contactName,
+        relationship: contactRelationship,
+        phone: contactPhone,
+      });
+      await refreshProfile();
+      reload();
+      setSaved('Saved. HR sees this straight away.');
+      setEditing(false);
+    } catch (thrown) {
+      setSaveError(friendlyError(thrown));
+    } finally {
+      setSaving(false);
+    }
+  }
   const { choice, setChoice } = useTheme();
 
   // Managing somebody is a relationship, not a role, so it is asked of the
   // database rather than read off the profile.
-  const { data, loading, error } = useLoad(
+  const { data, loading, error, reload } = useLoad(
     async () => {
       if (!profile) return null;
-      const [progress, reports] = await Promise.all([
+      const [progress, reports, contact, access, signIns] = await Promise.all([
         analyticsService.getEmployeeProgress(supabase, profile.id),
         teamService.listReports(supabase, profile.id),
+        authService.loadEmergencyContact(supabase, profile.id),
+        documentService.listDocumentAccess(supabase, profile.id, 5),
+        authService.listSignIns(supabase, 5),
       ]);
-      return { progress, reportCount: reports.length };
+      return { progress, reportCount: reports.length, contact, access, signIns };
     },
     [profile?.id],
   );
@@ -144,6 +201,116 @@ export default function MeScreen() {
         <Detail label="Phone" value={profile.phone ?? '—'} />
       </Card>
 
+      <SectionTitle>In an emergency</SectionTitle>
+      <SuccessNotice message={saved} />
+      <ErrorNotice message={saveError} />
+      {editing ? (
+        <Card>
+          <Text style={styles.label}>Your phone</Text>
+          <TextInput
+            style={styles.input} value={phone} onChangeText={setPhone}
+            keyboardType="phone-pad" placeholder="0400 000 000"
+            placeholderTextColor={colors.inkSubtle} accessibilityLabel="Your phone"
+          />
+          <Text style={[styles.label, { marginTop: spacing.md }]}>Who should we call</Text>
+          <TextInput
+            style={styles.input} value={contactName} onChangeText={setContactName}
+            placeholder="Their name" placeholderTextColor={colors.inkSubtle}
+            accessibilityLabel="Emergency contact name"
+          />
+          <Text style={[styles.label, { marginTop: spacing.md }]}>Relationship</Text>
+          <TextInput
+            style={styles.input} value={contactRelationship} onChangeText={setContactRelationship}
+            placeholder="Partner, parent, friend" placeholderTextColor={colors.inkSubtle}
+            accessibilityLabel="Relationship"
+          />
+          <Text style={[styles.label, { marginTop: spacing.md }]}>Their number</Text>
+          <TextInput
+            style={styles.input} value={contactPhone} onChangeText={setContactPhone}
+            keyboardType="phone-pad" placeholder="0400 000 000"
+            placeholderTextColor={colors.inkSubtle} accessibilityLabel="Emergency contact number"
+          />
+          <Row style={{ marginTop: spacing.lg }}>
+            <Button label="Save" onPress={save} busy={saving} style={{ flex: 1 }} />
+            <Button
+              label="Cancel" variant="ghost" style={{ flex: 1 }}
+              onPress={() => { setEditing(false); setSaveError(null); }}
+            />
+          </Row>
+        </Card>
+      ) : (
+        <Card>
+          {data?.contact ? (
+            <>
+              <Detail label="Contact" value={data.contact.name} />
+              <Detail label="Relationship" value={data.contact.relationship ?? '—'} />
+              <Detail label="Their number" value={data.contact.phone} />
+            </>
+          ) : (
+            <Text style={styles.meta}>
+              Nobody recorded. If something happens at work, this is the number that gets rung.
+              Only you and HR can see it.
+            </Text>
+          )}
+          <Button
+            label={data?.contact ? 'Update my details' : 'Add an emergency contact'}
+            variant="secondary" onPress={openEditor} style={{ marginTop: spacing.md }}
+          />
+        </Card>
+      )}
+
+      <SectionTitle>Who opened my files</SectionTitle>
+      <Card>
+        {data?.access?.length ? (
+          data.access.map((entry) => {
+            const actor = Array.isArray(entry.actor) ? entry.actor[0] : entry.actor;
+            return (
+              <View key={entry.id} style={{ paddingVertical: 6 }}>
+                <Text style={type.body} numberOfLines={1}>{entry.document_name}</Text>
+                <Text style={styles.meta}>
+                  {actor?.name ?? 'Somebody in HR'} · {formatDateTime(entry.opened_at)}
+                </Text>
+              </View>
+            );
+          })
+        ) : (
+          <Text style={styles.meta}>
+            Nobody has opened your personal documents. Opening your own files is not listed here.
+          </Text>
+        )}
+      </Card>
+
+      {/*
+        * The phone signs in against the auth service directly, so this list is
+        * not the web app's doing — the attempt is recorded by a hook inside the
+        * auth service itself, which every client goes through. A sign in from a
+        * device that is not yours is the one thing an app cannot prevent and
+        * you can recognise instantly.
+        */}
+      <SectionTitle>Recent sign-ins</SectionTitle>
+      <Card>
+        {data?.signIns?.length ? (
+          data.signIns.map((entry) => (
+            <View key={entry.id} style={{ paddingVertical: 6 }}>
+              <Text style={type.body} numberOfLines={1}>
+                {authService.signInSummary(entry)}
+              </Text>
+              <Text style={entry.succeeded ? styles.meta : styles.metaWarn}>
+                {entry.succeeded ? 'Signed in' : 'Failed attempt'} · {formatDateTime(entry.at)}
+                {entry.time_zone ? ` · ${entry.time_zone}` : ''}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.meta}>Nothing recorded yet.</Text>
+        )}
+        <Text style={[styles.meta, { marginTop: spacing.sm }]}>
+          This is one history: sign in on the desktop and it appears here too. Five
+          wrong passwords in fifteen minutes and the account stops answering, on
+          either app.
+        </Text>
+      </Card>
+
       {!can('organisation.settings', profile.role, PLATFORM, profile.role_profile?.permissions) && isAdmin ? (
         <>
           <SectionTitle>Workspace administration</SectionTitle>
@@ -181,9 +348,17 @@ function Detail({ label, value }: { label: string; value: string }) {
 const makeStyles = (colors: Colors) => StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl },
   meta: { fontSize: 13.5, color: colors.inkMuted, marginTop: 2 },
+  // A failed attempt is not an error to fix; it is a thing to look twice at.
+  metaWarn: { fontSize: 13.5, color: colors.warn, marginTop: 2 },
   spaced: { marginBottom: spacing.md },
   metricLabel: { fontSize: 13, color: colors.inkMuted, marginBottom: 6 },
   formula: { fontSize: 12.5, color: colors.inkSubtle, lineHeight: 18, marginTop: 4 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.inkMuted, marginBottom: 6 },
+  input: {
+    minHeight: 44, borderRadius: radius.md, borderWidth: 1, borderColor: colors.railStrong,
+    backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingVertical: 10,
+    fontSize: 15, color: colors.ink,
+  },
   chip: {
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: radius.pill,
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.rail,

@@ -65,6 +65,18 @@ insert into profiles (id, organisation_id, name, email, role, job_title, departm
   ('22222222-2222-2222-2222-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', 'Linus van Pelt',   'linus@woodstockdigital.test', 'employee', 'Operations Coordinator', 'b0000000-0000-0000-0000-00000000d002', '2026-07-01', '0400 000 007'),
   ('22222222-2222-2222-2222-000000000003', 'bbbbbbbb-0000-0000-0000-000000000001', 'Pig-Pen',          'pigpen@woodstockdigital.test','employee', 'Software Developer',     'b0000000-0000-0000-0000-00000000d001', '2025-11-11', '0400 000 008');
 
+-- Employment particulars. Two of the workspace's people are casual, which is
+-- what makes the Casual Employment Information Statement fall due again and
+-- again for them and only once for everybody else.
+update profiles set employment_hours = 'Full-time', employment_basis = 'Ongoing';
+update profiles set employment_hours = 'Part-time'
+  where id = '11111111-1111-1111-1111-000000000004';
+update profiles set employment_hours = 'Casual', employment_basis = 'Casual'
+  where id in ('11111111-1111-1111-1111-000000000003',
+               '22222222-2222-2222-2222-000000000003');
+update profiles set employment_basis = 'Fixed term'
+  where id = '22222222-2222-2222-2222-000000000002';
+
 update profiles set manager_id = '11111111-1111-1111-1111-000000000001'
   where organisation_id = 'aaaaaaaa-0000-0000-0000-000000000001' and role = 'employee';
 

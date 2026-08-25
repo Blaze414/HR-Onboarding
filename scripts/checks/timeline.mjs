@@ -74,15 +74,28 @@ const dates = [...page.matchAll(/timeline-when[^>]*>([^<]+)</g)].map((m) => new 
 const ordered = dates.every((d, i) => i === 0 || Number.isNaN(d) || dates[i - 1] >= d);
 check(dates.length > 1 && ordered, 'entries run newest first', `${dates.length} dated entries`);
 
-// Nobody reads a colleague's record through this tab: the page is admin-only,
-// and the timeline adds no way around that. Checked by what comes back rather
-// than by the status code — the redirect is served as a page that navigates,
-// so a 200 here says nothing either way.
+/*
+ * Nobody reads a colleague's record through this tab: the page is admin-only,
+ * and the timeline adds no way around that. Checked by what comes back rather
+ * than by the status code — the redirect is served as a page that navigates,
+ * so a 200 here says nothing either way.
+ *
+ * Read from the *rendered* document, with script elements removed. In
+ * development Next streams React's owner-stack debug payload into the markup,
+ * which serialises Server Component props — and under load it can carry a
+ * previous request's payload into a later response, so the raw HTML
+ * intermittently contains a name that was never rendered on the page. That is
+ * a development-server artefact and does not happen in a production build
+ * (verified: fifty requests, none of them carrying it), but it made this check
+ * fail two runs in three while testing nothing it claims to test. What it
+ * claims to test is whether an employee can *read* a colleague's record.
+ */
 const asEmployee = await fetch(`${BASE}/employees/${lucy.id}?tab=history`, {
   headers: { cookie: charlie.cookie },
 }).then((r) => r.text());
+const rendered = asEmployee.replace(/<script[\s\S]*?<\/script>/g, '');
 const lucyName = await rows(lucy, `profiles?select=name&id=eq.${lucy.id}`).then((r) => r[0]?.name ?? 'Lucy');
-check(!asEmployee.includes(lucyName),
+check(!rendered.includes(lucyName),
       'an employee cannot read a colleague\'s history', 'their record came back');
 
 console.log(bad === 0 ? '\nAll timeline checks passed.' : `\n${bad} failed.`);

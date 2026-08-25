@@ -20,6 +20,7 @@
     "email:send": "node scripts/send-email.mjs",
     "push:send": "node scripts/send-push.mjs",
     "install:mobile": "npm install --prefix apps/mobile",
-    "postinstall": "npm run install:mobile --silent"
+    "postinstall": "npm run install:mobile --silent && npm run assets:viewer --silent",
+    "assets:viewer": "file-viewer-copy-assets ./apps/desktop/public/file-viewer"
   }
 }

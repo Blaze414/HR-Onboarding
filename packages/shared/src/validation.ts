@@ -45,8 +45,17 @@ export const employeeSchema = z.object({
   department_id: z.string().uuid().optional().nullable(),
   manager_id: z.string().uuid().optional().nullable(),
   start_date: z.string().optional().nullable(),
+  end_date: z.string().optional().nullable(),
+  // Required particulars of an employee record: Fair Work Regulations 2009
+  // reg 3.32(c). Defaulted rather than optional so a record cannot be created
+  // without them and quietly stay incomplete.
+  employment_hours: z.enum(['Full-time', 'Part-time', 'Casual']).default('Full-time'),
+  employment_basis: z.enum(['Ongoing', 'Fixed term', 'Casual']).default('Ongoing'),
   phone: z.string().max(40).optional().nullable(),
-});
+}).refine(
+  (v) => (v.employment_hours === 'Casual') === (v.employment_basis === 'Casual'),
+  { message: 'Casual employment must be casual on both counts.', path: ['employment_basis'] },
+);
 
 export const templateSchema = z.object({
   name: z.string().min(3, 'Template name is required'),

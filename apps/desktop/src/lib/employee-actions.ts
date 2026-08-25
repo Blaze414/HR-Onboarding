@@ -19,6 +19,8 @@ import { getServerSupabase } from './supabase-server';
 export async function createEmployeeAction(input: {
   name: string; email: string; password: string; role: 'employee' | 'admin';
   job_title?: string; department_id?: string; manager_id?: string; start_date?: string; phone?: string;
+  employment_hours?: 'Full-time' | 'Part-time' | 'Casual';
+  employment_basis?: 'Ongoing' | 'Fixed term' | 'Casual';
   /**
    * Their first week, set up in the same submit.
    *
@@ -78,6 +80,8 @@ export async function createEmployeeAction(input: {
       department_id: parsed.data.department_id,
       manager_id: parsed.data.manager_id,
       start_date: parsed.data.start_date,
+      employment_hours: parsed.data.employment_hours,
+      employment_basis: parsed.data.employment_basis,
       phone: parsed.data.phone,
     });
     if (profileError) {

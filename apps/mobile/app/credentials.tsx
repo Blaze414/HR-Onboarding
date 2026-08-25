@@ -150,10 +150,10 @@ export default function CredentialsScreen() {
     }
   }
 
-  async function open(storagePath: string) {
+  async function open(storagePath: string, documentId?: string) {
     setActionError(null);
     try {
-      await Linking.openURL(await documentService.getDownloadUrl(supabase, storagePath, 120));
+      await Linking.openURL(await documentService.getDownloadUrl(supabase, storagePath, 120, documentId));
     } catch (e) {
       setActionError(friendlyError(e));
     }
@@ -291,7 +291,7 @@ export default function CredentialsScreen() {
               {item.document ? (
                 <Button
                   label="Open the file" variant="secondary" style={{ marginTop: spacing.md }}
-                  onPress={() => open(item.document!.storage_path)}
+                  onPress={() => open(item.document!.storage_path, item.document!.id)}
                 />
               ) : null}
             </Card>
