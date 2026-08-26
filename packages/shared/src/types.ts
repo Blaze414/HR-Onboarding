@@ -55,8 +55,9 @@ export interface Profile {
   end_date: string | null;
   /** Full-time, part-time or casual — Fair Work Regulations 2009 reg 3.32(c). */
   employment_hours: 'Full-time' | 'Part-time' | 'Casual' | null;
-  /** Ongoing, fixed term or casual — the same regulation, the other half. */
-  employment_basis: 'Ongoing' | 'Fixed term' | 'Casual' | null;
+  /** Ongoing, fixed term, casual or contract. A contractor is not an employee
+   *  and is owed none of the employee information statements. */
+  employment_basis: 'Ongoing' | 'Fixed term' | 'Casual' | 'Contract' | null;
   phone: string | null;
   is_active: boolean;
   created_at: string;
@@ -289,6 +290,7 @@ export interface AttentionItem {
 
 export type NotificationKind =
   | 'course_assigned' | 'course_due_soon' | 'task_assigned' | 'onboarding_step_assigned'
+  | 'conversion_notice' | 'conversion_answered'
   | 'event_invited' | 'course_completed' | 'task_completed' | 'onboarding_completed';
 
 export interface AppNotification {

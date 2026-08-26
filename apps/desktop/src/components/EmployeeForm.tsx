@@ -161,7 +161,10 @@ export function EmployeeForm({
             {['Full-time', 'Part-time', 'Casual'].map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </Field>
-        <Field label="Basis" hint="Ongoing, fixed term or casual.">
+        <Field
+          label="Basis"
+          hint="Ongoing, fixed term, casual or contract. A contractor is not an employee and is owed none of the employee information statements."
+        >
           <select
             className="select" value={form.employment_basis}
             onChange={(e) => setForm((f) => ({
@@ -171,7 +174,7 @@ export function EmployeeForm({
                 : f.employment_hours === 'Casual' ? 'Full-time' : f.employment_hours,
             }))}
           >
-            {['Ongoing', 'Fixed term', 'Casual'].map((v) => <option key={v} value={v}>{v}</option>)}
+            {['Ongoing', 'Fixed term', 'Casual', 'Contract'].map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </Field>
       </div>

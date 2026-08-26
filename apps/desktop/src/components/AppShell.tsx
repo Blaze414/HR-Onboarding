@@ -43,6 +43,8 @@ function navFor(session: Session): NavGroup[] {
         can('department.view', role, p, grants) ? { href: '/departments', label: 'Departments', icon: 'departments' } : null,
         can('analytics.view_full', role, p, grants) ? { href: '/analytics', label: 'Analytics', icon: 'analytics' } : null,
         can('report.view_full', role, p, grants) ? { href: '/reports', label: 'Reports', icon: 'reports' } : null,
+        can('document.view', role, p, grants) ? { href: '/policies', label: 'Policies', icon: 'documents' } : null,
+        can('payroll.manage', role, p, grants) ? { href: '/payroll', label: 'Pay', icon: 'reports' } : null,
         can('analytics.view_full', role, p, grants) ? { href: '/activity', label: 'Activity', icon: 'activity' } : null,
         // Super Administrators only. Not a report — the record the workspace is
         // investigated from when something has gone wrong.
@@ -54,6 +56,11 @@ function navFor(session: Session): NavGroup[] {
       group: 'Account',
       items: ([
         { href: '/profile', label: 'Profile', icon: 'profile' },
+        // Everybody's own pay, including people who cannot run one. The same
+        // route serves both: an employee following a link to /payroll should
+        // find their own pay slips, not a refusal.
+        can('payroll.view_own', role, p, grants) && !can('payroll.manage', role, p, grants)
+          ? { href: '/payroll', label: 'My pay', icon: 'reports' } : null,
         // Roles live inside Settings, reached from the "Users and roles" card
         // there. A second top-level entry for a page that is already a child of
         // Settings makes the sidebar claim two destinations for one idea.

@@ -9,7 +9,7 @@
   "scripts": {
     "db:start": "supabase start",
     "db:stop": "supabase stop",
-    "db:reset": "supabase db reset",
+    "db:reset": "supabase db reset && npm run db:files",
     "desktop": "npm run dev -w @snoopy/desktop",
     "mobile": "npm --prefix apps/mobile run start",
     "typecheck": "npm run typecheck -w @snoopy/shared && npm run typecheck -w @snoopy/desktop && npm --prefix apps/mobile run typecheck",
@@ -21,6 +21,7 @@
     "push:send": "node scripts/send-push.mjs",
     "install:mobile": "npm install --prefix apps/mobile",
     "postinstall": "npm run install:mobile --silent && npm run assets:viewer --silent",
-    "assets:viewer": "file-viewer-copy-assets ./apps/desktop/public/file-viewer"
+    "assets:viewer": "file-viewer-copy-assets ./apps/desktop/public/file-viewer",
+    "db:files": "node --experimental-strip-types --no-warnings scripts/seed-files.mjs"
   }
 }

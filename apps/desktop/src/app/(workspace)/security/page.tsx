@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { employeeService, formatDateTime, securityService, type WorkspaceSignIn } from '@snoopy/shared';
+import {
+  breachService, employeeService, formatDate, formatDateTime, securityService,
+  type WorkspaceSignIn,
+} from '@snoopy/shared';
+import { BreachActions, RecordBreach } from '@/components/BreachRegister';
 import { SelectFilter } from '@/components/Filters';
 import { EmptyState, PageHead, StatusBadge, TableCard, Tabs } from '@/components/ui';
 import { requireCapability } from '@/lib/session';
@@ -10,6 +14,7 @@ export const dynamic = 'force-dynamic';
 const VIEWS = [
   { key: 'sign-ins', label: 'Sign-ins' },
   { key: 'actions', label: 'What was done' },
+  { key: 'breaches', label: 'Breach register' },
   { key: 'looks', label: 'Who looked at this' },
 ] as const;
 
@@ -68,11 +73,12 @@ export default async function SecurityPage({
   // still a look.
   await securityService.recordLogRead(db, reason, person);
 
-  const [people, signIns, audit, looks] = await Promise.all([
+  const [people, signIns, audit, looks, breaches] = await Promise.all([
     employeeService.listEmployees(db),
     view === 'sign-ins' ? securityService.listWorkspaceSignIns(db, { personId: person }) : [],
     view === 'actions' ? securityService.listAudit(db, { actorId: person }) : [],
     view === 'looks' ? securityService.listLogReads(db) : [],
+    view === 'breaches' ? breachService.list(db) : [],
   ]);
 
   const query = { view, reason, ...(person ? { person } : {}) };
@@ -92,7 +98,13 @@ export default async function SecurityPage({
         current={`/security?${new URLSearchParams(query)}`}
       />
 
-      {view !== 'looks' ? (
+      {view === 'breaches' ? (
+        <div className="row" style={{ margin: '16px 0', justifyContent: 'flex-end' }}>
+          <RecordBreach />
+        </div>
+      ) : null}
+
+      {view !== 'looks' && view !== 'breaches' ? (
         <div className="row" style={{ margin: '16px 0' }}>
           {/* The filter keeps the rest of the query, so the reason travels
               with it and the look stays attributed to the same investigation. */}
@@ -173,6 +185,67 @@ export default async function SecurityPage({
                         : <span className="subtle">—</span>}
                     </td>
                     <td>{securityService.describeChange(a)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </TableCard>
+      ) : null}
+
+      {view === 'breaches' ? (
+        <TableCard title={`${breaches.filter((b) => b.decision === 'Assessing').length} being assessed · ${breaches.length} recorded`}>
+          {breaches.length === 0 ? (
+            <EmptyState message="Nothing recorded. A suspected breach starts a thirty-day assessment clock." />
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Suspected</th><th>What happened</th><th>Assessment</th>
+                  <th>Notified</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {breaches.map((b) => (
+                  <tr key={b.id}>
+                    <td>
+                      {formatDateTime(b.suspected_at)}
+                      <div className={b.assessment_overdue ? 'warn' : 'subtle'}>
+                        {b.decision === 'Assessing'
+                          ? (b.assessment_overdue
+                            ? `${Math.abs(b.days_to_assess)} days past the 30-day limit`
+                            : `${b.days_to_assess} days left to assess`)
+                          : `Assessed ${b.assessed_at ? formatDate(b.assessed_at) : ''}`}
+                      </div>
+                      {b.raised_by_name ? <div className="subtle">Raised by {b.raised_by_name}</div> : null}
+                    </td>
+                    <td>
+                      {b.summary}
+                      {b.information ? <div className="subtle">{b.information}</div> : null}
+                      {b.people_affected !== null ? (
+                        <div className="subtle">{b.people_affected} people affected</div>
+                      ) : null}
+                    </td>
+                    <td>
+                      <StatusBadge status={b.decision === 'Assessing' ? 'Pending' : b.decision} />
+                      {b.assessment_note ? <div className="subtle">{b.assessment_note}</div> : null}
+                      {b.assessed_by_name ? <div className="subtle">by {b.assessed_by_name}</div> : null}
+                    </td>
+                    <td>
+                      {/* The two halves are separate obligations and land at
+                          separate moments, so they are reported separately. */}
+                      {b.decision === 'Eligible — notification required' ? (
+                        <>
+                          <div className={b.oaic_notified_at ? 'subtle' : 'warn'}>
+                            OAIC: {b.oaic_notified_at ? formatDate(b.oaic_notified_at) : 'not yet'}
+                          </div>
+                          <div className={b.individuals_notified_at ? 'subtle' : 'warn'}>
+                            People: {b.individuals_notified_at ? formatDate(b.individuals_notified_at) : 'not yet'}
+                          </div>
+                        </>
+                      ) : <span className="subtle">Not required</span>}
+                    </td>
+                    <td className="num"><BreachActions breach={b} /></td>
                   </tr>
                 ))}
               </tbody>

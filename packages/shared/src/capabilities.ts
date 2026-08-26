@@ -27,7 +27,8 @@ export type Capability =
   | 'document.review_team'
   | 'analytics.view_summary' | 'analytics.view_full'
   | 'report.view_summary' | 'report.view_full'
-  | 'organisation.settings' | 'user.role_management' | 'user.role_management_self';
+  | 'organisation.settings' | 'user.role_management' | 'user.role_management_self'
+  | 'payroll.manage' | 'payroll.view_own';
 
 export type CapabilityState = 'allowed' | 'restricted' | 'desktop_only' | 'admin_only';
 
@@ -127,6 +128,15 @@ const RULES: Record<Capability, Rule> = {
   'analytics.view_full':     { roles: ADMIN,    platforms: DESKTOP },
   'report.view_summary':     { roles: EVERYONE, platforms: BOTH },
   'report.view_full':        { roles: ADMIN,    platforms: DESKTOP },
+
+  /*
+   * Pay. Desktop only and deliberately: a pay run is entered, checked and
+   * released, and none of those are things to do one-handed on a platform
+   * where the screen is small enough to hide a column.
+   */
+  'payroll.manage':          { roles: ADMIN,    platforms: DESKTOP },
+  // Your own pay slips, which is a read and belongs anywhere you are.
+  'payroll.view_own':        { roles: EVERYONE, platforms: BOTH },
 
   'organisation.settings':   { roles: ADMIN,    platforms: DESKTOP },
   'user.role_management':    { roles: ADMIN,    platforms: DESKTOP },

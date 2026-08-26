@@ -1,8 +1,11 @@
 import Link from 'next/link';
-import { DOCUMENT_CATEGORIES, employeeService, PRODUCT_NAME, roleService } from '@snoopy/shared';
+import {
+  DOCUMENT_CATEGORIES, employeeService, organisationService, PRODUCT_NAME, roleService,
+} from '@snoopy/shared';
 import { DepartmentEditor } from '@/components/DepartmentEditor';
 import { InviteUser } from '@/components/InviteUser';
 import { RoleSelect } from '@/components/RoleSelect';
+import { SmallBusinessTest } from '@/components/SmallBusinessTest';
 import { Card, EmptyState, PageHead, Person, StatusBadge, TableCard } from '@/components/ui';
 import { requireSession, sessionCan } from '@/lib/session';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -55,6 +58,7 @@ export default async function SettingsPage() {
     employeeService.listEmployees(db),
     roleService.listRoles(db),
   ]);
+  const sizeTest = await organisationService.smallBusinessTest(db);
 
   return (
     <>
@@ -79,6 +83,19 @@ export default async function SettingsPage() {
           </p>
         </Card>
       </div>
+
+      {/*
+        * Not a setting in the ordinary sense — an answer to a legal test that
+        * decides what the workspace owes people. It lives here because it is a
+        * fact about the organisation, and it is asked rather than guessed
+        * because two of the three things the Act counts are invisible from
+        * inside this database.
+        */}
+      {sizeTest ? (
+        <Card title="Are we a small business employer?">
+          <SmallBusinessTest test={sizeTest} canEdit={isAdmin} />
+        </Card>
+      ) : null}
 
       <TableCard
         title="Departments"

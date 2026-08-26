@@ -7,9 +7,11 @@ import {
   credentialService,
   documentRequestService,
   notificationService,
-  capabilitiesForTier, courseService, documentService, employeeService, eventService,
+  breachService,
+  capabilitiesForTier, conversionService, courseService, documentService, employeeService, eventService,
+  organisationService, payrollService, policyService,
   friendlyError, onboardingService, roleService, saveView, deleteSavedView, statementService, taskService,
-  type StepType,
+  type BreachDecision, type PolicyRequirement, type RefusalGround, type StepType,
 } from '@snoopy/shared';
 import { getSession, requireCapability, requireSession, sessionCan } from './session';
 import { getServerSupabase } from './supabase-server';
@@ -926,4 +928,234 @@ export async function recordStatementAction(input: {
     }),
     ['/reports', `/employees/${input.employeeId}`],
   );
+}
+
+// ------------------------------------------------------ casual conversion
+//
+// The employee gives the notice; the employer consults, then answers within 21
+// days on one of three grounds. Every one of those rules is enforced by the
+// database, so these actions carry no logic of their own — they check the
+// caller may act at all, and let the refusal come back as a sentence.
+
+export async function giveConversionNoticeAction(note: string): Promise<ActionResult> {
+  const session = await requireCapability('employee.view_self');
+  const db = await getServerSupabase();
+  return run(
+    () => conversionService.giveNotice(db, {
+      organisationId: session.organisationId,
+      employeeId: session.userId,
+      note,
+    }),
+    ['/profile', '/reports'],
+  );
+}
+
+export async function withdrawConversionNoticeAction(id: string): Promise<ActionResult> {
+  await requireCapability('employee.view_self');
+  const db = await getServerSupabase();
+  return run(() => conversionService.withdraw(db, id), ['/profile', '/reports']);
+}
+
+export async function recordConsultationAction(id: string): Promise<ActionResult> {
+  await requireCapability('employee.edit');
+  const db = await getServerSupabase();
+  return run(() => conversionService.recordConsultation(db, id), ['/reports']);
+}
+
+export async function acceptConversionAction(input: {
+  id: string; hours: 'Full-time' | 'Part-time'; basis: 'Ongoing' | 'Fixed term'; note?: string;
+}): Promise<ActionResult> {
+  await requireCapability('employee.edit');
+  const db = await getServerSupabase();
+  return run(
+    () => conversionService.accept(db, input),
+    // The employment particulars change with the answer, so the record and the
+    // statement schedule both have to be re-read.
+    ['/reports', '/employees'],
+  );
+}
+
+export async function refuseConversionAction(input: {
+  id: string; ground: RefusalGround; note?: string;
+}): Promise<ActionResult> {
+  await requireCapability('employee.edit');
+  const db = await getServerSupabase();
+  return run(() => conversionService.refuse(db, input), ['/reports']);
+}
+
+/**
+ * Point an obligation at the document that answers it.
+ *
+ * Two writes, not one: an obligation already answered by a different document
+ * has to release it first, or the unique index refuses the swap and the person
+ * is told about a constraint rather than about their workspace.
+ */
+export async function claimPolicyAction(
+  documentId: string | null,
+  requirement: PolicyRequirement,
+  previousDocumentId: string | null,
+): Promise<ActionResult> {
+  await requireCapability('document.manage_shared');
+  const db = await getServerSupabase();
+  return run(
+    async () => {
+      if (previousDocumentId && previousDocumentId !== documentId) {
+        await policyService.claim(db, previousDocumentId, null);
+      }
+      if (documentId) await policyService.claim(db, documentId, requirement);
+    },
+    ['/policies', '/documents'],
+  );
+}
+
+// ------------------------------------------------------- data breach register
+//
+// Same readership as the monitoring page: a Super Administrator, because that
+// is who answers to the OAIC. An ordinary admin cannot see this — a breach may
+// well be about an admin.
+
+export async function recordBreachAction(input: {
+  summary: string; information?: string; suspectedAt?: string;
+}): Promise<ActionResult> {
+  const session = await requireCapability('user.role_management_self');
+  const db = await getServerSupabase();
+  if (!input.summary.trim()) return { ok: false, error: 'Say what happened.' };
+  return run(
+    () => breachService.record(db, {
+      organisationId: session.organisationId,
+      summary: input.summary,
+      information: input.information,
+      // A datetime-local value carries no zone; treat it as this machine's.
+      suspectedAt: input.suspectedAt ? new Date(input.suspectedAt).toISOString() : undefined,
+    }),
+    ['/security'],
+  );
+}
+
+export async function assessBreachAction(input: {
+  id: string; decision: BreachDecision; note: string; peopleAffected?: number;
+}): Promise<ActionResult> {
+  await requireCapability('user.role_management_self');
+  const db = await getServerSupabase();
+  return run(() => breachService.assess(db, input), ['/security']);
+}
+
+export async function recordBreachNotificationAction(input: {
+  id: string; oaic?: boolean; individuals?: boolean;
+}): Promise<ActionResult> {
+  await requireCapability('user.role_management_self');
+  const db = await getServerSupabase();
+  return run(() => breachService.recordNotification(db, input), ['/security']);
+}
+
+/**
+ * Answer the small business employer questions.
+ *
+ * The organisation comes from the session, never from the form. Changing this
+ * changes what the workspace owes people, so it is an audited write like any
+ * other — the trigger on `organisation_settings` stamps who answered and when.
+ */
+export async function saveSmallBusinessAnswersAction(input: {
+  associatedHeadcount: number;
+  regularCasuals: number;
+  declaredSmall: boolean | null;
+  declaredNote?: string;
+}): Promise<ActionResult> {
+  const session = await requireCapability('organisation.settings');
+  const db = await getServerSupabase();
+  return run(
+    () => organisationService.saveSmallBusinessAnswers(db, session.organisationId, input),
+    ['/settings', '/reports', '/profile'],
+  );
+}
+
+// ------------------------------------------------------------------ payroll
+//
+// A separate permission from employee.edit throughout: whoever keeps the people
+// records is often not whoever runs the pay, and bundling them means handing
+// out everybody's salary to let somebody fix a job title.
+
+export async function openPayPeriodAction(input: {
+  startsOn: string; endsOn: string; note?: string;
+}): Promise<ActionResult> {
+  const session = await requireCapability('payroll.manage');
+  const db = await getServerSupabase();
+  if (!input.startsOn || !input.endsOn) return { ok: false, error: 'Give the period a start and an end.' };
+  return run(
+    () => payrollService.openPeriod(db, { organisationId: session.organisationId, ...input }),
+    ['/payroll'],
+  );
+}
+
+export async function recordPayAction(input: {
+  periodId: string; employeeId: string;
+  gross: number; tax: number; net: number; superAmount: number;
+  superFund?: string; ordinaryHours?: number; overtimeHours?: number;
+}): Promise<ActionResult> {
+  const session = await requireCapability('payroll.manage');
+  const db = await getServerSupabase();
+  return run(
+    () => payrollService.recordPay(db, {
+      organisationId: session.organisationId,
+      periodId: input.periodId,
+      employeeId: input.employeeId,
+      // Entered in dollars, held in cents. The conversion happens once, here,
+      // so no screen and no query has to remember which it is looking at.
+      grossCents: payrollService.toCents(input.gross),
+      taxWithheldCents: payrollService.toCents(input.tax),
+      netCents: payrollService.toCents(input.net),
+      superCents: payrollService.toCents(input.superAmount),
+      superFund: input.superFund,
+      ordinaryHours: input.ordinaryHours,
+      overtimeHours: input.overtimeHours,
+    }),
+    ['/payroll'],
+  );
+}
+
+export async function markPeriodPaidAction(periodId: string, paidOn?: string): Promise<ActionResult> {
+  await requireCapability('payroll.manage');
+  const db = await getServerSupabase();
+  return run(() => payrollService.markPaid(db, periodId, paidOn), ['/payroll', '/profile']);
+}
+
+export async function issuePaySlipAction(recordId: string): Promise<ActionResult> {
+  await requireCapability('payroll.manage');
+  const db = await getServerSupabase();
+  // Re-read the record rather than trusting a figure that travelled through the
+  // browser: the pay slip is built from it, and it is the document somebody
+  // takes to a bank.
+  const [record] = await payrollService.listRecords(db).then(
+    (rows) => rows.filter((r) => r.id === recordId),
+  );
+  if (!record) return { ok: false, error: 'That pay record could not be found.' };
+  return run(() => payrollService.issueSlip(db, record), ['/payroll', '/profile', '/documents']);
+}
+
+/**
+ * Issue every slip the period still owes, in one go.
+ *
+ * A pay run ends with one decision and thirty slips. Asking somebody to click
+ * thirty times is how the thirtieth gets missed, and reg 3.46 does not have a
+ * "we did most of them" exception.
+ */
+export async function issueAllPaySlipsAction(periodId?: string): Promise<ActionResult> {
+  await requireCapability('payroll.manage');
+  const db = await getServerSupabase();
+  let issued = 0;
+  const result = await run(
+    async () => { issued = await payrollService.issueOutstandingSlips(db, periodId); },
+    ['/payroll', '/profile', '/documents'],
+  );
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    warning: issued === 0 ? 'Every pay slip has already gone out.' : undefined,
+  };
+}
+
+export async function recordSuperPaidAction(recordId: string): Promise<ActionResult> {
+  await requireCapability('payroll.manage');
+  const db = await getServerSupabase();
+  return run(() => payrollService.recordSuperPaid(db, recordId), ['/payroll']);
 }

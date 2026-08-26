@@ -148,6 +148,11 @@ function Overview({ employee, progress, emergencyContact }: { employee: any; pro
                   ? 'Casual'
                   : `${employee.employment_hours} · ${employee.employment_basis}`
                 : <span className="warn">Not recorded — required on an employee record.</span>}
+              {employee.employment_basis === 'Contract' ? (
+                <div className="subtle">
+                  Engaged on a contract, so not owed the employee information statements.
+                </div>
+              ) : null}
             </dd>
             {employee.end_date ? <><dt>End date</dt><dd>{formatDate(employee.end_date)}</dd></> : null}
             <dt>Phone</dt><dd>{employee.phone ?? '—'}</dd>

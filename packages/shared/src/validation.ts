@@ -50,7 +50,7 @@ export const employeeSchema = z.object({
   // reg 3.32(c). Defaulted rather than optional so a record cannot be created
   // without them and quietly stay incomplete.
   employment_hours: z.enum(['Full-time', 'Part-time', 'Casual']).default('Full-time'),
-  employment_basis: z.enum(['Ongoing', 'Fixed term', 'Casual']).default('Ongoing'),
+  employment_basis: z.enum(['Ongoing', 'Fixed term', 'Casual', 'Contract']).default('Ongoing'),
   phone: z.string().max(40).optional().nullable(),
 }).refine(
   (v) => (v.employment_hours === 'Casual') === (v.employment_basis === 'Casual'),

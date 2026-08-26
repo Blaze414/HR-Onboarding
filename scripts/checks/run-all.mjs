@@ -16,6 +16,12 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 const checks = [
+  /*
+   * First, deliberately. Later groups create documents straight through the API
+   * to test other rules, bypassing the upload path that would give them a file —
+   * so this has to see the workspace as the seed left it, not as they leave it.
+   */
+  ['Every document has a real file behind it', 'documents-have-files.mjs', []],
   ['Routes render for an admin', 'routes.mjs', [
     'lucy@peanutsstudio.test', 'dashboard', 'courses', 'tasks', 'events', 'documents',
     'onboarding', 'onboarding/templates', 'employees', 'departments', 'analytics',
@@ -41,6 +47,11 @@ const checks = [
   ['You own your details, HR owns the rest', 'profile-self-service.mjs', []],
   ['Opening a file leaves a trace', 'document-access-log.mjs', []],
   ['The record says what kind of employment it is', 'employment-record.mjs', []],
+  ['A casual can ask, and gets an answer in 21 days', 'casual-conversion.mjs', []],
+  ['The policies an employer must have in writing', 'policy-register.mjs', []],
+  ['A suspected breach starts a clock', 'breach-register.mjs', []],
+  ['Contractors, casuals and the size threshold', 'small-business.mjs', []],
+  ['Pay is recorded, and the slip goes out', 'payroll.mjs', []],
   ['Nothing is trusted for where it came from', 'zero-trust.mjs', []],
   ['Every change is on the record, and so is every look', 'monitoring.mjs', []],
   ['Filters actually filter', 'filters.mjs', []],
@@ -66,6 +77,18 @@ const reset = spawnSync('npx', ['supabase', 'db', 'reset'], {
 if (reset.status !== 0) {
   console.warn('supabase db reset reported a problem; continuing — the checks will show if data is missing.');
 }
+
+/*
+ * The reset restores the rows; this puts the files back behind them. Without it
+ * every document is a path with nothing at it, which is the state the document
+ * checks exist to rule out.
+ */
+console.log('── Writing document files ' + '─'.repeat(34));
+spawnSync(
+  process.execPath,
+  ['--experimental-strip-types', '--no-warnings', path.join(here, '../seed-files.mjs')],
+  { stdio: 'inherit', cwd: path.join(here, '../..') },
+);
 
 let failed = 0;
 for (const [label, file, args] of checks) {

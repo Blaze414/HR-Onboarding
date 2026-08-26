@@ -3,9 +3,10 @@ import {
   acknowledgementService, analyticsService, courseService, credentialService, documentRequestService,
   employeeService,
   formatDate, formatDateTime, listSavedViews,
-  onboardingService, statementService, taskService,
+  conversionService, onboardingService, statementService, taskService,
 } from '@snoopy/shared';
 import { ClearFilters, SelectFilter } from '@/components/Filters';
+import { ConversionResponse } from '@/components/ConversionResponse';
 import { RecordStatement } from '@/components/RecordStatement';
 import { SavedViews } from '@/components/SavedViews';
 import { CredentialReview } from '@/components/CredentialReview';
@@ -30,6 +31,7 @@ const REPORTS = [
   { key: 'verify', label: 'Awaiting verification' },
   { key: 'acknowledgements', label: 'Acknowledgements owed' },
   { key: 'statements', label: 'Statements owed' },
+  { key: 'conversion', label: 'Asked to go permanent' },
   { key: 'documents', label: 'Documents owed' },
   { key: 'coverage', label: 'Who could cover what' },
   { key: 'expiring', label: 'Expiring credentials' },
@@ -93,6 +95,7 @@ export default async function ReportsPage({
       {report === 'verify' ? <VerificationReport db={db} /> : null}
       {report === 'acknowledgements' ? <AcknowledgementReport db={db} /> : null}
       {report === 'statements' ? <StatementReport db={db} /> : null}
+      {report === 'conversion' ? <ConversionReport db={db} /> : null}
       {report === 'documents' ? <DocumentRequestReport db={db} departmentId={department} /> : null}
       {report === 'coverage' && canSeeCoverage ? <CoverageReport db={db} departmentId={department} /> : null}
       {report === 'expiring' && canSeeCoverage ? <ExpiringReport db={db} /> : null}
@@ -601,6 +604,67 @@ async function StatementReport({ db }: { db: any }) {
                 <td><StatusBadge status={r.status} /></td>
                 <td>{r.issued_at ? formatDateTime(r.issued_at) : <span className="subtle">—</span>}</td>
                 <td className="num">{r.issued_at ? null : <RecordStatement row={r} />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </TableCard>
+  );
+}
+
+/**
+ * Casuals who have asked to become permanent.
+ *
+ * The clock is the report. An employer has 21 days from the notice to answer
+ * in writing, and must consult before answering — so the column that matters
+ * is not the status but how long is left, and a notice that has run out of
+ * days is the first thing on the page.
+ */
+async function ConversionReport({ db }: { db: any }) {
+  const rows = await conversionService.list(db);
+  const waiting = rows.filter((r) => r.status === 'Awaiting response');
+  const overdue = waiting.filter((r) => r.is_overdue);
+
+  return (
+    <TableCard title={`${waiting.length} awaiting an answer · ${overdue.length} past 21 days`}>
+      {rows.length === 0 ? (
+        <EmptyState message="No casual has given notice. A casual can give one after six months — twelve in a small business." />
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Employee</th><th>Notice given</th><th>Answer owed by</th>
+              <th>Consulted</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td>
+                  <Link href={`/employees/${r.employee_id}`}>{r.employee_name}</Link>
+                  {r.note ? <div className="subtle">{r.note}</div> : null}
+                </td>
+                <td>{formatDate(r.given_at)}</td>
+                <td className={r.is_overdue ? 'warn' : undefined}>
+                  {formatDate(r.due_by)}
+                  {r.status === 'Awaiting response' ? (
+                    <div className={r.is_overdue ? 'warn' : 'subtle'}>
+                      {r.is_overdue
+                        ? `${Math.abs(r.days_left)} days over`
+                        : `${r.days_left} days left`}
+                    </div>
+                  ) : null}
+                </td>
+                <td>{r.consulted_at ? formatDate(r.consulted_at) : <span className="subtle">Not yet</span>}</td>
+                <td>
+                  <StatusBadge status={r.status === 'Awaiting response' ? 'Pending' : r.status} />
+                  {r.refusal_ground ? <div className="subtle">{r.refusal_ground}</div> : null}
+                  {r.responded_by_name ? <div className="subtle">by {r.responded_by_name}</div> : null}
+                </td>
+                <td className="num">
+                  {r.status === 'Awaiting response' ? <ConversionResponse notice={r} /> : null}
+                </td>
               </tr>
             ))}
           </tbody>

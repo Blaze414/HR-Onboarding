@@ -21,7 +21,7 @@ for tables, filters, bulk operations and reporting.
 
 **Getting it running** — [Requirements](#requirements) · [Getting started](#getting-started) · [Migrations and seed data](#migrations-and-seed-data) · [Run both apps together](#run-both-apps-together) · [Demo accounts](#demo-accounts) · [Screenshots](#screenshots) · ["Cannot reach the server"](#cannot-reach-the-server)
 
-**Compliance and security** — [Australian employment record obligations](#australian-employment-record-obligations) · [Zero Trust, and where it actually bites](#zero-trust-and-where-it-actually-bites) · [One history, both apps](#one-history-both-apps) · [Session and activity monitoring](#session-and-activity-monitoring) · [Row Level Security](#row-level-security)
+**Compliance and security** — [Australian employment record obligations](#australian-employment-record-obligations) · [The documents are real](#the-documents-are-real) · [Pay records and pay slips](#pay-records-and-pay-slips) · [Where a payroll engine plugs in](#where-a-payroll-engine-plugs-in) · [Contractors, and who is actually an employee](#contractors-and-who-is-actually-an-employee) · [Are we a small business employer?](#are-we-a-small-business-employer) · [Casuals asking to become permanent](#casuals-asking-to-become-permanent) · [The policies an employer must have in writing](#the-policies-an-employer-must-have-in-writing) · [The breach register](#when-something-goes-wrong-the-breach-register) · [Zero Trust, and where it actually bites](#zero-trust-and-where-it-actually-bites) · [One history, both apps](#one-history-both-apps) · [Session and activity monitoring](#session-and-activity-monitoring) · [Row Level Security](#row-level-security)
 
 **How it is put together** — [Architecture](#architecture) · [Repository layout](#repository-layout) · [Ownership model](#ownership-model) · [Row Level Security](#row-level-security) · [Roles and permissions](#roles-and-permissions) · [Platform capability strategy](#platform-capability-strategy) · [Monorepo notes](#monorepo-notes) · [Conventions](#conventions)
 
@@ -413,23 +413,324 @@ the small-business threshold only when they are employed on a regular and
 systematic basis, which this workspace does not model — so it counts them all
 and errs towards owing the statement more often rather than less.
 
-### What this does not do
 
-- **No payroll.** No pay rates, hours worked, overtime, penalty rates,
-  deductions, superannuation or pay slips — the largest part of reg 3.33–3.36
-  and all of the pay slip rules. This app holds the *people* record; it is not
-  a payroll system and does not pretend the seven-year clock it enforces covers
-  time and wages records it never sees.
+
+### Contractors, and who is actually an employee
+
+The employment particulars offered ongoing, fixed term or casual, so anybody
+engaged on a contract was being filed as one of the three things they are not.
+That is not cosmetic. Most of what this app tracks is owed to **employees** —
+the Fair Work Information Statement, the casual statement, the employee choice
+pathway — so recording a contractor as an employee makes the workspace owe them
+things it does not, and report gaps that are not gaps.
+
+`Contract` is now a fourth basis, and the consequences follow it automatically:
+
+- A contractor is owed **neither** information statement. The register excludes
+  them rather than listing them as overdue.
+- A contractor cannot use the casual conversion pathway, which is for casuals.
+- A contractor is **not counted** towards the small business threshold, because
+  they are not an employee.
+
+The two halves still have to agree — casual on one count and something else on
+the other is refused by the database, as before.
+
+### Are we a small business employer?
+
+The threshold decides real things: whether a casual waits **six months or
+twelve** before they may ask to go permanent, and which schedule their
+statement runs on. It was being answered by counting rows in `profiles`, which
+is the rough shape of s.23 and wrong in three specific ways.
+
+Section 23 counts employees of the employer **and of any associated entities**,
+and counts casuals **only** where they are employed on a regular and systematic
+basis. Neither is derivable from this database: associated entities are not in
+it, and whether a casual's pattern is regular and systematic is a judgement
+about rosters. So both are asked, in **Settings**.
+
+![Are we a small business employer?](docs/screenshots/d17-small-business.png)
+
+Three questions, and the arithmetic is shown rather than the conclusion alone:
+
+| Counted | From |
+|---|---|
+| Employees in this workspace | The records, excluding casuals and contractors |
+| Casuals on a regular and systematic pattern | Asked — the roster knows, the database does not |
+| Employees of associated entities | Asked — they are not in this workspace at all |
+
+An employer who already knows where they stand can **say so**, with a reason,
+and their answer is used in preference to the count — they are the one who has
+to defend it, and they know about the entities and rosters this database has
+never seen. Every answer records who gave it and when.
+
+The consequences are listed on the screen next to the answer, because a
+threshold with no stated consequence is trivia. And changing it changes what
+the workspace owes people, not just a label: the checks flip the count past
+fifteen and watch the casual statement schedule grow a six-month due date, then
+flip it back and watch that date disappear.
+
+### Casuals asking to become permanent
+
+Since the Closing Loopholes changes a casual does not wait to be offered
+permanent work — they notify the employer in writing, and the employer has to
+answer. Three parts of that are deadlines rather than intentions, which is why
+they are in the database rather than in somebody's diary:
+
+| | Rule |
+|---|---|
+| **Who may ask** | A casual with six months' service — **twelve** in a small business employer — and not again within six months of their last notice |
+| **What the employer must do** | **Consult** the employee, then answer **in writing within 21 days** |
+| **When it may be refused** | Only on one of **three** grounds, and the answer has to say which |
+
+Eligibility is computed from the record, not asserted: an employee cannot give
+a notice they are not entitled to, and HR cannot wave one through that they
+are. The reason is always shown with a date — *"a notice was already given on
+31 Jul 2026. Another can be given from 31 Jan 2027."* — because "not yet"
+without a date is the same as "no".
+
+![Asked to go permanent](docs/screenshots/d15-conversion.png)
+
+Consultation is its own step because it is its own obligation: an answer
+written without one is a defective answer, and the database refuses to accept a
+decision until the consultation is recorded. The three refusal grounds are an
+enum, not a text box — *why was this refused* is the question the Fair Work
+Commission asks, and free text answers it differently every time.
+
+Accepting updates the employment particulars **in the same transaction as the
+answer**, so the record and the decision cannot disagree. That has a
+consequence worth watching in the checks: the moment somebody stops being
+casual, they stop being owed the Casual Employment Information Statement, and
+the statement register agrees without anybody touching it.
+
+### The policies an employer must have in writing
+
+Several obligations are not satisfied by intent or by conduct. The positive
+duty under the Sex Discrimination Act is the clearest — taking *"reasonable and
+proportionate measures"* is assessed on what you can show, and a policy nobody
+has read is not a measure.
+
+Nothing new was invented for this. The workspace already had documents, with
+versions, and read receipts recorded against the version in force. What was
+missing was the other direction: a list of what **ought** to exist, so a policy
+that was never written shows as a gap rather than as an absence of a row.
+
+![Workplace policies](docs/screenshots/d16-policies.png)
+
+Seven obligations, each with the authority it comes from, and four states:
+
+| State | Means |
+|---|---|
+| **No policy** | Nothing claims this obligation |
+| **Not required reading** | A document claims it, but nobody has to acknowledge it — so there is no evidence anyone saw it |
+| **Not read by everybody** | It must be read, and some people have not |
+| **In place** | Current, and acknowledged by everyone |
+
+Two of the seven are marked as **not universal** — whistleblower protections
+depend on company structure, workplace surveillance on state law and on whether
+the workplace does any. Reporting those as gaps for an employer they do not
+apply to is how a register teaches people to ignore it.
+
+The register is **derived, not maintained**, which is the only kind that stays
+true for longer than a month. One consequence is load-bearing and is tested:
+re-issuing a policy bumps its version, which retires every receipt against the
+old one — so a rewritten policy drops from *In place* back to *Not read by
+everybody* rather than staying green on last version's receipts.
+
+### When something goes wrong: the breach register
+
+The workspace could already answer *what happened* — who signed in from where,
+who opened whose file, what changed. The Notifiable Data Breaches scheme asks
+something the audit trail cannot: **what did you do about it, and how quickly.**
+
+The obligation is a clock with two ends. Suspecting an eligible breach starts a
+**reasonable and expeditious assessment, thirty days at the outside** — the
+outer limit, not the target. An assessment finding reasonable grounds to
+believe the breach is eligible obliges notification of the OAIC **and** of the
+people affected, as soon as practicable; there is no second thirty days for
+that half.
+
+So the register holds the dates rather than the prose: suspected on, assessment
+owed by, assessed on, what was decided, notified on. It sits as a fourth tab on
+**Monitoring**, because a breach is what somebody opens that page for.
+
+- **The clock runs from the suspicion, not from the typing.** The date is
+  backdatable on entry and immovable afterwards — neither the suspicion date
+  nor the deadline can be edited once recorded.
+- **A finding cannot be recorded without its reasoning.** Write it as if it
+  will be read by somebody who disagrees, because that is when it is read.
+- **A notification cannot be logged before there is a finding**, and telling
+  the Commissioner does not discharge telling the people. They are separate
+  obligations landing at separate moments, so they are tracked separately.
+- **Nothing can be deleted.** A breach that turned out to be nothing is
+  recorded as nothing — *"we looked and decided it was fine"* is the most
+  important row in the register when somebody later disagrees.
+
+**Sources.** [FWO — Becoming a permanent employee](https://www.fairwork.gov.au/starting-employment/types-of-employees/casual-employees/becoming-a-permanent-employee) ·
+[FWO — Casual conversion changes](https://www.fairwork.gov.au/about-us/workplace-laws/legislation-changes/closing-loopholes/casual-employment-changes/casual-conversion) ·
+[AHRC — the positive duty](https://fairworkmate.com.au/blog/employer-positive-duty-sexual-harassment-respect-at-work) ·
+[Safe Work Australia — sexual and gender-based harassment WHS duties](https://www.safeworkaustralia.gov.au/safety-topic/hazards/sexual-and-gender-based-harassment/whs-duties) ·
+[OAIC — Notifiable Data Breaches scheme](https://www.oaic.gov.au/privacy/notifiable-data-breaches/about-the-notifiable-data-breaches-scheme)
+
+
+### Pay records and pay slips
+
+This was the largest gap. Fair Work Regulations 3.33–3.36 require records of
+what somebody was paid, the hours behind it and the superannuation contributed;
+**reg 3.46** requires a **pay slip within one working day of the payment**,
+whether or not the person is on leave. None of it existed here, and the
+seven-year retention this app enforces on documents was quietly not covering
+the records most often asked for.
+
+**What this is not is a payroll calculator, and that is a decision rather than
+an unfinished edge.** Nothing here works out PAYG withholding or the
+superannuation guarantee. Those belong to a payroll engine with a maintained
+Australian regulation behind it — getting them wrong costs somebody real money,
+and a schema written alongside an onboarding tracker has no business having an
+opinion about tax scales.
+
+![Pay](docs/screenshots/d18-payroll.png)
+
+So the figures arrive from outside, and what happens here is the part the law
+puts on the employer regardless of who did the arithmetic:
+
+- **A period is a draft until it is paid.** Both deadlines — the pay slip and
+  the superannuation — count from the day the money moved, so recording that
+  day is a distinct act rather than a side effect of the last line being typed.
+- **A paid period is closed.** Its figures cannot be edited and it cannot be
+  reopened or take new lines; a correction is an adjustment in a later period,
+  which is how payroll has always handled it. Nothing can be deleted at all.
+- **Net above gross is refused** — not an accounting rule so much as a typo
+  detector, since the two are entered separately and transposing them is the
+  common mistake.
+- **Pay is the most sensitive thing in the workspace**, so the read rule is the
+  narrowest in the app: your own and nothing else. **A line manager gets no
+  special view** — what somebody earns is not line-management information.
+- **`source` stays on the record** — entered by hand, or returned by an engine,
+  with the engine's own reference. *Where did this number come from* is the
+  first question asked when one of them is wrong.
+
+Two Australian deadlines are approximated rather than exact, and the
+approximation errs early: working days are counted as weekdays because this app
+holds no public holiday calendar, and holidays differ by state. The deadline it
+reports is the earliest that could apply, not the latest.
+
+
+### The documents are real
+
+Every document used to be a row naming a storage path with nothing behind it.
+That is invisible until somebody clicks Preview, and then the whole half of the
+app reads as a mock-up: the access log records reads of nothing, the seven-year
+retention protects nothing, and a pay slip is a timestamp rather than something
+an employee can hand to a bank.
+
+Every document now has an actual PDF behind it, built with `pdf-lib`:
+
+- **Employment agreements** carry that person's own particulars — position,
+  commencement, hours, basis — and say different things for a casual, a
+  contractor and an ongoing employee, because the terms differ.
+- **Each of the seven policies** in the register is the policy: right to
+  disconnect under s.333M, the positive duty under s.47C, psychosocial hazards,
+  discrimination, privacy, whistleblower, surveillance.
+- **Handbooks, course material and anything else** get a real document saying
+  what they are.
+- **Pay slips are generated when issued** and filed as the employee's own
+  personal document, so they inherit everything that already applies to those:
+  the employee can read it, the access log records anybody else who does, and
+  retention keeps it.
+
+[`scripts/seed-files.mjs`](scripts/seed-files.mjs) writes a file behind any
+document that lacks one, working out what it should say from what the row
+already knows. It runs from `npm run db:reset` and inside `npm run check`, and
+skips anything that already has a file.
+
+**This found a real hole.** Storage read access was checked against the
+*organisation* folder alone, so any signed-in colleague could fetch any object
+in their workspace — including somebody else's employment agreement. Row level
+security hid the row, so the app never offered the path, but a path is
+guessable and hiding a row is not protecting a file. Nothing exploited it while
+every object was a placeholder, which is exactly why it survived: there was
+nothing behind the paths to find. The storage policy now mirrors the row policy
+clause for clause — `shared/` to the workspace, `{owner}/` to that person,
+their manager, or an administrator.
+
+### Issuing pay slips
+
+Two things were wrong with issuing them one at a time.
+
+**It looked like it did all of them.** Issuing one slip on a page where others
+were already issued is indistinguishable from issuing every slip, and *"Saved."*
+did nothing to tell them apart. The confirmation now names the person: *"Pay
+slip issued to Schroeder."*
+
+**A pay run ends with one decision and thirty slips.** Asking somebody to click
+thirty times is how the thirtieth gets missed, and reg 3.46 has no "we did most
+of them" exception. **Issue N pay slips** does the outstanding ones for a period
+in one go, generating every document.
+
+### An employee's own pay
+
+`/payroll` serves two views from one route: whoever runs the pay sees the pay
+run, everybody else sees **their own history in full** — every period, not the
+last few. A pay slip is something people go looking for at tax time or when a
+bank asks, and a list that stops at four fails exactly then. Totals for gross,
+tax and superannuation across every recorded period sit at the top, and each
+row links to the PDF in their documents.
+
+Splitting this into two addresses would have meant an employee following a link
+to `/payroll` and being told they may not see their own pay slips.
+
+### Where a payroll engine plugs in
+
+[Payroll Engine](https://payrollengine.org/) is the intended calculation layer —
+MIT-licensed, regulation-as-code, REST-first. The seam is
+[`PayrollEngine`](packages/shared/src/services/payroll.ts): `available()` and
+`calculate()`, and nothing else. Keeping the surface that narrow means this app
+never grows an opinion about tax and the engine can be swapped without touching
+anything above the line.
+
+It is **typed and wired, not running**, and two facts decide that — both
+measured rather than assumed:
+
+- **The engine ships no Australian regulation.** It is a framework for
+  executing regulations somebody authors. PAYG withholding scales, the
+  superannuation guarantee and STP Phase 2 would all have to be written and
+  maintained as regulation before any figure it returns is fit to pay a person.
+  Pointed at an empty engine, it produces confident zeroes.
+- **Its backend is published for amd64 only** (`docker manifest inspect` on
+  `ghcr.io/payroll-engine/payrollengine.backend`) and requires SQL Server 2019,
+  which is also amd64-only. This machine is aarch64 with 2 CPUs and ~2 GB of
+  Docker memory, already running eight Supabase containers.
+
+Until `PAYROLL_ENGINE_URL` and `PAYROLL_ENGINE_TENANT` are set **and** the
+engine carries a regulation, `available()` is false and the app records figures
+entered by hand — which is a real way to run small payroll, and an honest one.
+
+**Still not covered:** leave balances and accruals (reg 3.36's other half), and
+STP reporting to the ATO.
+
+### What this still does not do
+
+- **No pay calculation.** Records and deadlines are kept; PAYG withholding and
+  the superannuation guarantee are not computed. See above.
 - **No leave balances**, so nothing about accruals or cash-out records.
-- **The Privacy Act employee records exemption is not leaned on.** Private
+- **No Single Touch Payroll reporting.** STP Phase 2 goes to the ATO from the
+  payroll system, and this is not one.
+- **No WGEA reporting.** The gender pay gap calculation needs remuneration data
+  this app deliberately does not hold; headcount composition alone would not be
+  a submission.
+- **The policy register checks that a policy exists and was read, not that it
+  is any good.** Whether a right-to-disconnect policy is *adequate* is a
+  judgement no schema makes.
+
+### On the Privacy Act
+
+- **The employee records exemption is not leaned on.** Private
   sector employee records are currently exempt from the Australian Privacy
   Principles, and the government has agreed in principle to narrow that. The
   app is built as if it were not exempt: personal documents are visible to
   their subject, reads of them are logged and shown to the subject, emergency
   contacts are readable only by the person and HR, and nothing is retained
   beyond the period that requires it.
-- **Right to disconnect, casual conversion requests, WGEA reporting, payday
-  super** — all real 2025–2026 obligations, none of them modelled here.
 
 **Sources.** [Fair Work Ombudsman — Record-keeping](https://www.fairwork.gov.au/pay-and-wages/paying-wages/record-keeping) ·
 [Fair Work Act 2009 s.535](https://classic.austlii.edu.au/au/legis/cth/consol_act/fwa2009114/s535.html) ·
@@ -959,6 +1260,40 @@ pages — nothing is mocked, so a failure there is a failure a user would hit:
   registered device; somebody with no device queues nothing; nobody can write to
   either queue, redirect one, register a device for somebody else, or read
   another person's token; a dry run leaves both queues untouched.
+- **Casual conversion** — somebody who is not casual cannot give notice and the
+  database refuses it rather than the screen; a second notice inside six months
+  is refused; the 21 days cannot be pushed out; answering before consulting is
+  refused, as is a refusal without one of the three grounds and an acceptance
+  that leaves the employment casual; an employee cannot answer their own notice
+  or see a colleague's; and accepting changes the employment record and what
+  the employer owes them, in one move.
+- **Policy register** — each of the four states is reported for the right
+  reason; an obligation with nothing written against it does not claim people
+  failed to read it; re-issuing a policy drops it out of *In place*; two
+  documents cannot claim the same obligation and a personal file cannot claim
+  any; and another workspace sees its own gaps, not these.
+- **Breach register** — only a Super Administrator can record or read one; the
+  30 days run from the suspicion and neither date can be moved afterwards; a
+  finding needs its reasoning; a notification cannot be logged before there is
+  a finding; telling the Commissioner does not discharge telling the people;
+  and nothing can be deleted.
+- **Documents** — every document a user can see has a file behind it, and every
+  one of them is a real PDF checked by its bytes rather than by the type column;
+  an employment agreement is a structured document rather than an empty file;
+  and an employee still cannot fetch a colleague's file or lose access to their
+  own.
+- **Pay** — a period opens as a draft and cannot be closed empty; net above
+  gross is refused; a paid period's figures are frozen and it cannot be
+  reopened, take new lines, or be deleted; the pay slip falls due one working
+  day after payment and reads as overdue past it; an employee sees their own
+  pay and the period it sits in, a colleague and a manager see neither, and
+  nobody can give themselves a raise.
+- **Contractors and size** — a contractor is owed neither statement and cannot
+  use the casual pathway; casuals and contractors are not counted towards the
+  threshold until declared; declaring associated entities flips the answer, and
+  the casual statement schedule grows a six-month due date when it does;
+  an employer's own answer overrides the count; an employee can see the answer
+  but not change it; and every answer records who gave it.
 - **Employment records** — the record says what kind of employment it is and
   refuses the contradiction; an employee cannot rewrite their own basis; a
   personal document is stamped with seven years and cannot be deleted inside
@@ -981,7 +1316,7 @@ pages — nothing is mocked, so a failure there is a failure a user would hit:
   hand, re-pinned or deleted; looking requires a reason; and the person looked
   at can see that they were looked at.
 
-The suite runs **32 groups and 524 assertions** end to end. `npm run
+The suite runs **39 groups and 628 assertions** end to end. `npm run
 check` resets the demo data before it runs, because the progress check completes
 real courses, tasks and onboarding steps — and because several of the records it
 creates are, by design, ones nobody is allowed to delete.

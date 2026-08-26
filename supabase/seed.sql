@@ -58,7 +58,7 @@ insert into departments (id, organisation_id, name, description) values
 insert into profiles (id, organisation_id, name, email, role, job_title, department_id, start_date, phone) values
   ('11111111-1111-1111-1111-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'Lucy van Pelt',    'lucy@peanutsstudio.test',     'admin',    'Head of Learning',         'a0000000-0000-0000-0000-00000000d002', '2024-02-05', '0400 000 001'),
   ('11111111-1111-1111-1111-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', 'Charlie Brown',    'charlie@peanutsstudio.test',  'employee', 'Software Developer',     'a0000000-0000-0000-0000-00000000d001', '2026-06-15', '0400 000 002'),
-  ('11111111-1111-1111-1111-000000000003', 'aaaaaaaa-0000-0000-0000-000000000001', 'Schroeder',        'schroeder@peanutsstudio.test','employee', 'Software Developer',     'a0000000-0000-0000-0000-00000000d001', '2025-09-01', '0400 000 003'),
+  ('11111111-1111-1111-1111-000000000003', 'aaaaaaaa-0000-0000-0000-000000000001', 'Schroeder',        'schroeder@peanutsstudio.test','employee', 'Software Developer',     'a0000000-0000-0000-0000-00000000d001', '2025-06-01', '0400 000 003'),
   ('11111111-1111-1111-1111-000000000004', 'aaaaaaaa-0000-0000-0000-000000000001', 'Marcie',           'marcie@peanutsstudio.test',   'employee', 'Operations Coordinator', 'a0000000-0000-0000-0000-00000000d003', '2025-03-10', '0400 000 004'),
   ('11111111-1111-1111-1111-000000000005', 'aaaaaaaa-0000-0000-0000-000000000001', 'Peppermint Patty', 'patty@peanutsstudio.test',    'employee', 'HR Coordinator',         'a0000000-0000-0000-0000-00000000d005', '2026-07-20', '0400 000 005'),
   ('22222222-2222-2222-2222-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'Sally Brown',      'sally@woodstockdigital.test', 'admin',    'HR Coordinator',         'b0000000-0000-0000-0000-00000000d003', '2024-08-01', '0400 000 006'),
@@ -76,6 +76,11 @@ update profiles set employment_hours = 'Casual', employment_basis = 'Casual'
                '22222222-2222-2222-2222-000000000003');
 update profiles set employment_basis = 'Fixed term'
   where id = '22222222-2222-2222-2222-000000000002';
+
+-- One contractor, so the difference is visible: engaged, on the record, and
+-- owed none of the employee statements.
+update profiles set employment_hours = 'Part-time', employment_basis = 'Contract'
+  where id = '11111111-1111-1111-1111-000000000004';
 
 update profiles set manager_id = '11111111-1111-1111-1111-000000000001'
   where organisation_id = 'aaaaaaaa-0000-0000-0000-000000000001' and role = 'employee';
@@ -440,3 +445,65 @@ insert into activity_log (organisation_id, actor_id, action, entity_type, entity
   ('aaaaaaaa-0000-0000-0000-000000000001','11111111-1111-1111-1111-000000000003','completed_task','task',null,'{"title":"Prepare workshop"}', now() - interval '6 days'),
   ('bbbbbbbb-0000-0000-0000-000000000001','22222222-2222-2222-2222-000000000001','created_event','event','f0000000-0000-0000-0000-00000000e001','{"title":"Training Session"}', now() - interval '4 days'),
   ('bbbbbbbb-0000-0000-0000-000000000001','22222222-2222-2222-2222-000000000003','completed_course','course','d0000000-0000-0000-0000-00000000c001','{"title":"Workplace Safety"}', now() - interval '5 days');
+
+
+-- A casual who has asked to become permanent, and has not been answered.
+--
+-- Backdated so the twenty-one days have run out: the employee choice pathway
+-- is only interesting when the clock has teeth, and an employer who has not
+-- answered is the state worth seeing on the screen.
+insert into casual_conversion_notices (organisation_id, employee_id, given_at, note)
+values (
+  'aaaaaaaa-0000-0000-0000-000000000001',
+  '11111111-1111-1111-1111-000000000003',
+  now() - interval '25 days',
+  'I have been working the same shifts every week since I started and would like to go permanent.'
+);
+
+
+-- Two of the required policies exist, and one of them nobody has read yet.
+--
+-- The register is only useful when it is showing a real mixture: something in
+-- place, something published but unread, and several never written. Seeding it
+-- fully covered would demonstrate nothing.
+update documents
+   set satisfies_policy = 'Right to disconnect', requires_acknowledgement = true
+ where organisation_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+   and name = 'Studio Policies';
+
+update documents
+   set satisfies_policy = 'Preventing sexual harassment'
+ where organisation_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+   and name = 'Team Handbook';
+
+
+-- A pay period that has been paid, with one slip still to go out.
+--
+-- Deliberately a fortnight that ends before the range the payroll check uses,
+-- so the two do not collide on the unique period. Paid three days ago, which
+-- puts the pay slip past its one working day and the superannuation still
+-- inside its window — the mixture worth seeing on the screen.
+insert into pay_periods (id, organisation_id, starts_on, ends_on, status, paid_on, note)
+values (
+  'cccccccc-0000-0000-0000-000000000001'::uuid,
+  'aaaaaaaa-0000-0000-0000-000000000001',
+  '2026-07-01', '2026-07-14', 'Draft', null, 'Fortnight ending 14 July'
+);
+
+insert into pay_records
+  (organisation_id, period_id, employee_id, gross_cents, tax_withheld_cents, net_cents,
+   super_cents, super_fund, ordinary_hours, overtime_hours, slip_issued_at, super_paid_on)
+values
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001',
+   '11111111-1111-1111-1111-000000000002', 410000, 90000, 320000, 49200, 'AustralianSuper', 76, 0,
+   now() - interval '2 days', current_date - 1),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001',
+   '11111111-1111-1111-1111-000000000003', 285000, 52000, 233000, 34200, 'Hostplus', 60, 4,
+   null, null),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001',
+   '11111111-1111-1111-1111-000000000005', 362000, 74000, 288000, 43440, 'AustralianSuper', 76, 0,
+   now() - interval '2 days', null);
+
+update pay_periods
+   set status = 'Paid', paid_on = current_date - 3
+ where id = 'cccccccc-0000-0000-0000-000000000001';
