@@ -13,7 +13,21 @@ import { Overlay } from './Interactive';
  * documents stay as light as they were.
  */
 const FileViewer = dynamic(
-  () => import('@file-viewer/react-full').then((m) => m.FileViewer),
+  () => Promise.all([
+    import('@file-viewer/react-full'),
+    /*
+     * Side-effect only: this module sets `globalThis.pdfjsWorker` when it
+     * runs. PDF.js checks that global *before* ever falling back to its own
+     * `import(workerSrc)` of a plain URL string — a runtime ES-module-from-URL
+     * fetch that has proven unreliable here ("Setting up fake worker failed:
+     * Invalid or unexpected token", intermittent even against a correct
+     * build). Importing it here instead is a normal webpack-bundled chunk —
+     * ordinary script loading, none of that fragility — so by the time
+     * FileViewer looks for a worker, one is already sitting on the global and
+     * the risky path is never taken at all.
+     */
+    import('pdfjs-dist/legacy/build/pdf.worker.min.mjs'),
+  ]).then(([m]) => m.FileViewer),
   { ssr: false, loading: () => <p className="muted">Opening…</p> },
 );
 
@@ -69,7 +83,20 @@ export function DocumentPreview({ doc, onClose }: { doc: DocumentRecord; onClose
           <FileViewer
             url={url}
             filename={extensionHint(doc.storage_path)}
-            options={{ theme: currentTheme() }}
+            /*
+             * Without an explicit `pdf.workerUrl`, the viewer first *probes*
+             * whether a real Worker is usable before committing to one — and
+             * when that probe doesn't come back a clean "compatible", it falls
+             * through to a main-thread "fake worker" that dynamically
+             * `import()`s this same script. That import reliably fails here
+             * ("Setting up fake worker failed: Invalid or unexpected token"),
+             * even though the file itself is byte-correct — confirmed via
+             * direct curl against dev and a real production build. Naming the
+             * URL explicitly skips the flaky probe/fallback chain entirely and
+             * commits straight to a dedicated Worker thread, which is already
+             * permitted by the CSP's `worker-src 'self' blob:'`.
+             */
+            options={{ theme: currentTheme(), pdf: { workerUrl: '/file-viewer/vendor/pdf/pdf.worker.mjs' } }}
             style={{ width: '100%', height: '100%' }}
           />
         ) : null}

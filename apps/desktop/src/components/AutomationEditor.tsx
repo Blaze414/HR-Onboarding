@@ -38,7 +38,7 @@ export function AutomationEditor({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy || !checklistId}
+                className="btn btn-primary" disabled={busy || !checklistId} aria-busy={busy}
                 onClick={() => {
                   if (!checklistId) { setError('Choose a checklist.'); return; }
                   call(
@@ -87,7 +87,7 @@ export function RemoveAutomation({ id, label }: { id: string; label: string }) {
   const { busy, call } = useAction();
   return (
     <button
-      className="btn btn-sm btn-ghost" disabled={busy} aria-label={`Remove rule: ${label}`}
+      className="btn btn-sm btn-ghost" disabled={busy} aria-busy={busy} aria-label={`Remove rule: ${label}`}
       onClick={() => {
         if (!window.confirm(`Stop raising ${label} automatically? Requests already raised are kept.`)) return;
         call(() => removeChecklistAutomationAction(id));

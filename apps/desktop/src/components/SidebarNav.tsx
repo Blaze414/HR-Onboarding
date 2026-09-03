@@ -24,6 +24,12 @@ export function SidebarNav({ groups }: { groups: NavGroup[] }) {
               aria-current={
                 pathname === item.href || pathname.startsWith(`${item.href}/`) ? 'page' : undefined
               }
+              /* The label collapses to icon-only under 1080px (CSS hides
+                 `.label`, which also removes it from the a11y tree) — this
+                 keeps the destination announced to screen readers and gives
+                 a sighted user a hover tooltip once the text is gone. */
+              aria-label={item.label}
+              title={item.label}
             >
               <Icon name={item.icon} size={17} />
               <span className="label">{item.label}</span>

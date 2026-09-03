@@ -70,21 +70,29 @@ export default async function WorklistPage() {
         <EmptyState message="Nothing needs you right now. Anything staff send in will appear here." />
       ) : null}
 
-      {GROUPS.map((group) => {
-        const rows = items.filter((i) => i.kind === group.kind);
-        if (rows.length === 0) return null;
+      {/*
+       * Its own gap rather than the page's default `.content > * + *` rhythm:
+       * six independent queues read as one dense stack at 18px apart, and
+       * each is already carrying a header + blurb of its own — they need more
+       * air between them than a run of body text does.
+       */}
+      <div className="worklist-list">
+        {GROUPS.map((group) => {
+          const rows = items.filter((i) => i.kind === group.kind);
+          if (rows.length === 0) return null;
 
-        return (
-          <WorklistGroup
-            key={group.kind}
-            kind={group.kind}
-            title={group.title}
-            blurb={group.blurb}
-            rows={rows}
-            canClear={canClear[group.kind] ?? false}
-          />
-        );
-      })}
+          return (
+            <WorklistGroup
+              key={group.kind}
+              kind={group.kind}
+              title={group.title}
+              blurb={group.blurb}
+              rows={rows}
+              canClear={canClear[group.kind] ?? false}
+            />
+          );
+        })}
+      </div>
     </>
   );
 }

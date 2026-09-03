@@ -43,7 +43,7 @@ function navFor(session: Session): NavGroup[] {
         can('department.view', role, p, grants) ? { href: '/departments', label: 'Departments', icon: 'departments' } : null,
         can('analytics.view_full', role, p, grants) ? { href: '/analytics', label: 'Analytics', icon: 'analytics' } : null,
         can('report.view_full', role, p, grants) ? { href: '/reports', label: 'Reports', icon: 'reports' } : null,
-        can('document.view', role, p, grants) ? { href: '/policies', label: 'Policies', icon: 'documents' } : null,
+        can('document.view', role, p, grants) ? { href: '/policies', label: 'Policies', icon: 'document' } : null,
         can('payroll.manage', role, p, grants) ? { href: '/payroll', label: 'Pay', icon: 'reports' } : null,
         can('analytics.view_full', role, p, grants) ? { href: '/activity', label: 'Activity', icon: 'activity' } : null,
         // Super Administrators only. Not a report — the record the workspace is

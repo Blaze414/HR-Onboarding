@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { courseService, employeeService, formatDate, formatRelativeDay, taskService } from '@snoopy/shared';
+import { courseService, relativeDueLabel, employeeService, formatDate, taskService } from '@snoopy/shared';
 import { ActionButton } from '@/components/Interactive';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskStatusControl } from '@/components/TaskStatusControl';
@@ -66,7 +66,7 @@ export default async function TaskDetailPage({
             <dl className="dl">
               <dt>Status</dt><dd><StatusBadge status={task.status} /></dd>
               <dt>Priority</dt><dd><StatusBadge status={task.priority} /></dd>
-              <dt>Due</dt><dd>{formatDate(task.due_date)} · <span className="subtle">{formatRelativeDay(task.due_date)}</span></dd>
+              <dt>Due</dt><dd>{formatDate(task.due_date)} · <span className="subtle">{relativeDueLabel(task.due_date, task.status === 'Completed')}</span></dd>
               <dt>Responsible</dt>
               <dd>{task.assignee ? <Person name={task.assignee.name} href={`/employees/${task.assigned_to}`} /> : <span className="subtle">Unassigned</span>}</dd>
               <dt>Related course</dt>

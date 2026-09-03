@@ -27,7 +27,7 @@ export function AcknowledgeDocument({
     <>
       <button
         className="btn btn-sm btn-primary"
-        disabled={busy}
+        disabled={busy} aria-busy={busy}
         onClick={() => call(() => acknowledgeDocumentAction(documentId))}
       >
         {busy ? 'Recording…' : updatedSinceRead ? 'I have read the new version' : 'I have read this'}

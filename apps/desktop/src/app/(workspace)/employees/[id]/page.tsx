@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   documentRequestService,
-  analyticsService, authService, courseService, documentService, employeeService,
-  EMPTY_STATES, formatDate, formatDateTime, formatRelativeDay, loadTimeline, onboardingService,
+  analyticsService, authService, courseService, documentService, relativeDueLabel, employeeService,
+  EMPTY_STATES, formatDate, formatDateTime, loadTimeline, onboardingService,
   roleService,
   taskService,
 } from '@snoopy/shared';
@@ -224,7 +224,7 @@ async function TasksTab({ db, id }: { db: any; id: string }) {
               <td><Link className="link" href={`/tasks/${t.id}`}>{t.title}</Link></td>
               <td><StatusBadge status={t.status} /></td>
               <td><StatusBadge status={t.priority} /></td>
-              <td className="subtle nowrap">{formatRelativeDay(t.due_date)}</td>
+              <td className="subtle nowrap">{relativeDueLabel(t.due_date, t.status === 'Completed')}</td>
             </tr>
           ))}
           {tasks.length === 0 ? <tr><td colSpan={4}><EmptyState message={EMPTY_STATES.tasks} /></td></tr> : null}

@@ -36,7 +36,7 @@ export function InviteUser({
             <>
               <button className="btn" onClick={() => { setOpen(false); setSent(false); }}>Close</button>
               <button
-                className="btn btn-primary" disabled={busy || sent}
+                className="btn btn-primary" disabled={busy || sent} aria-busy={busy}
                 onClick={() => call(() => inviteEmployeeAction(form), () => setSent(true))}
               >
                 {sent ? 'Invitation sent' : busy ? 'Sending…' : 'Send invitation'}

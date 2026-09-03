@@ -143,7 +143,7 @@ function ReviewRequest({ request }: { request: DocumentRequest }) {
           footer={
             <>
               <button
-                className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy}
+                className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (!note.trim()) { setError('Say what needs correcting before sending it back.'); return; }
                   call(() => reviewDocumentRequestAction(request.id, false, note), () => setOpen(false));
@@ -153,7 +153,7 @@ function ReviewRequest({ request }: { request: DocumentRequest }) {
               </button>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => call(() => reviewDocumentRequestAction(request.id, true), () => setOpen(false))}
               >
                 {busy ? 'Saving…' : 'Accept'}
@@ -199,7 +199,7 @@ function RequestDocument({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (title.trim().length < 2) { setError('Give the request a title.'); return; }
                   call(
@@ -268,7 +268,7 @@ function ApplyChecklist({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy || !checklistId}
+                className="btn btn-primary" disabled={busy || !checklistId} aria-busy={busy}
                 onClick={() => {
                   if (!checklistId) { setError('Choose a checklist.'); return; }
                   call(() => applyChecklistAction(checklistId, employeeId, startDate), () => setOpen(false));
@@ -326,7 +326,7 @@ function SaveAsChecklist({ employeeId, disabled }: { employeeId: string; disable
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (name.trim().length < 2) { setError('Give the checklist a name.'); return; }
                   call(() => saveChecklistFromEmployeeAction(employeeId, name, kind), () => setOpen(false));

@@ -34,7 +34,7 @@ export function DocumentActions({ doc, canDelete }: { doc: DocumentRecord; canDe
       ) : null}
       {canDelete && !documentService.isRetainedRecord(doc) ? (
         <button
-          className="btn btn-sm btn-danger" disabled={busy}
+          className="btn btn-sm btn-danger" disabled={busy} aria-busy={busy}
           onClick={() => {
             if (!window.confirm(`Delete "${doc.name}"? The file is removed from storage too.`)) return;
             call(() => deleteDocumentAction(doc.id));

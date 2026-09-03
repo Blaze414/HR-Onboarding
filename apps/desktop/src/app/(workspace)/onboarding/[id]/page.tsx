@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { EMPTY_STATES, formatDate, formatRelativeDay, onboardingService } from '@snoopy/shared';
+import { relativeDueLabel, EMPTY_STATES, formatDate, onboardingService } from '@snoopy/shared';
 import { ActionButton } from '@/components/Interactive';
 import { StepToggle } from '@/components/StepToggle';
 import { Card, PageHead, Person, ProgressBar, StatusBadge } from '@/components/ui';
@@ -46,7 +46,7 @@ export default async function OnboardingDetailPage({ params }: { params: Promise
             <dt>Employee</dt>
             <dd><Person name={plan.employee?.name ?? '—'} href={isAdmin ? `/employees/${plan.employee_id}` : undefined} /></dd>
             <dt>Started</dt><dd>{formatDate(plan.start_date)}</dd>
-            <dt>Target</dt><dd>{formatDate(plan.target_completion_date)} · <span className="subtle">{formatRelativeDay(plan.target_completion_date)}</span></dd>
+            <dt>Target</dt><dd>{formatDate(plan.target_completion_date)} · <span className="subtle">{relativeDueLabel(plan.target_completion_date, plan.status === 'Completed')}</span></dd>
             <dt>Completed</dt><dd>{plan.completed_at ? formatDate(plan.completed_at) : '—'}</dd>
           </dl>
         </Card>

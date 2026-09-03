@@ -65,10 +65,31 @@ const SECURITY_HEADERS = [
   }]),
 ];
 
+/*
+ * PDF.js's worker bundle calls `new Function(...)` internally (its own JIT
+ * path, not something this app writes or controls). A dedicated Worker
+ * enforces the CSP delivered on ITS OWN response, separately from the page
+ * that created it — so the page-wide `script-src` above never reaches it
+ * either way, and dropping `unsafe-eval` from the page CSP for production
+ * does nothing to stop this worker from using it. Scoping `unsafe-eval` to
+ * just this one vendored script's response is what actually narrows the
+ * page's own attack surface while leaving the worker able to run at all.
+ */
+const PDF_WORKER_HEADERS = [
+  { key: 'Content-Security-Policy', value: "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'" },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
-    return [{ source: '/:path*', headers: SECURITY_HEADERS }];
+    return [
+      { source: '/file-viewer/vendor/pdf/:path*', headers: PDF_WORKER_HEADERS },
+      // Excludes the pdf worker path above so it gets only its own headers —
+      // two Content-Security-Policy headers on one response are enforced as
+      // an intersection, and the stricter one would still block the eval.
+      { source: '/((?!file-viewer/vendor/pdf/).*)', headers: SECURITY_HEADERS },
+    ];
   },
   ...(devPort ? { distDir: `.next-${devPort}` } : {}),
   // The shared domain package ships TypeScript source, not a build artefact.

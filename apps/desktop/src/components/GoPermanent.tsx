@@ -1,6 +1,6 @@
 'use client';
 
-import type { ConversionNotice } from '@snoopy/shared';
+import { LOCALE, type ConversionNotice } from '@snoopy/shared';
 import { useState } from 'react';
 import { giveConversionNoticeAction, withdrawConversionNoticeAction } from '@/lib/actions';
 import { Field, useAction } from './Interactive';
@@ -24,8 +24,8 @@ export function GoPermanent({
     return (
       <div className="stack">
         <p>
-          You gave notice on {new Date(notice.given_at).toLocaleDateString()}. A written
-          answer is owed by <strong>{new Date(notice.due_by).toLocaleDateString()}</strong>.
+          You gave notice on {new Date(notice.given_at).toLocaleDateString(LOCALE)}. A written
+          answer is owed by <strong>{new Date(notice.due_by).toLocaleDateString(LOCALE)}</strong>.
         </p>
         <p className="muted">
           {notice.consulted_at
@@ -34,7 +34,7 @@ export function GoPermanent({
         </p>
         <div className="row">
           <button
-            className="btn btn-sm" disabled={busy}
+            className="btn btn-sm" disabled={busy} aria-busy={busy}
             onClick={() => call(() => withdrawConversionNoticeAction(notice.id))}
           >
             {busy ? 'Withdrawing…' : 'Withdraw my notice'}
@@ -49,9 +49,9 @@ export function GoPermanent({
     return (
       <div className="stack">
         <p>
-          Your notice of {new Date(notice.given_at).toLocaleDateString()} was{' '}
+          Your notice of {new Date(notice.given_at).toLocaleDateString(LOCALE)} was{' '}
           <strong>{notice.status.toLowerCase()}</strong>
-          {notice.responded_at ? ` on ${new Date(notice.responded_at).toLocaleDateString()}` : ''}.
+          {notice.responded_at ? ` on ${new Date(notice.responded_at).toLocaleDateString(LOCALE)}` : ''}.
         </p>
         {notice.refusal_ground ? <p className="muted">Ground given: {notice.refusal_ground}</p> : null}
         {notice.response_note ? <blockquote className="muted">{notice.response_note}</blockquote> : null}
@@ -78,7 +78,7 @@ export function GoPermanent({
           </Field>
           <div className="row">
             <button
-              className="btn btn-primary btn-sm" disabled={busy}
+              className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy}
               onClick={() => call(() => giveConversionNoticeAction(note), () => setOpen(false))}
             >
               {busy ? 'Sending…' : 'Give notice'}

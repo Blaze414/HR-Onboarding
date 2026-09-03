@@ -45,7 +45,7 @@ export function RoleEditor({ role, trigger, lockedReason }: {
             <>
               {role && !locked ? (
                 <button
-                  className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy}
+                  className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy} aria-busy={busy}
                   onClick={() => {
                     if (!window.confirm(`Delete the role "${role.name}"?`)) return;
                     call(() => deleteRoleAction(role.id), () => setOpen(false));
@@ -56,7 +56,7 @@ export function RoleEditor({ role, trigger, lockedReason }: {
               ) : null}
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy || locked}
+                className="btn btn-primary" disabled={busy || locked} aria-busy={busy}
                 onClick={() => {
                   if (name.trim().length < 2) { setError('Give the role a name.'); return; }
                   call(

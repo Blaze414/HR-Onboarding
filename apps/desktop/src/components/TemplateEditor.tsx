@@ -137,7 +137,7 @@ export function TemplateEditor({ template }: { template?: OnboardingTemplate }) 
           <Icon name="plus" size={15} /> Add step
         </button>
         <span style={{ flex: 1 }} />
-        <button className="btn btn-primary" onClick={save} disabled={busy}>
+        <button className="btn btn-primary" onClick={save} disabled={busy} aria-busy={busy}>
           {busy ? 'Saving…' : 'Save template'}
         </button>
       </div>

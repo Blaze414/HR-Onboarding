@@ -32,7 +32,7 @@ export function StartOffboarding({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy || !templateId}
+                className="btn btn-primary" disabled={busy || !templateId} aria-busy={busy}
                 onClick={() => {
                   if (!templateId) { setError('Choose an exit plan.'); return; }
                   call(

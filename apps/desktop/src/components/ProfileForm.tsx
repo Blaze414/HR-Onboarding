@@ -36,7 +36,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <input className="input" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
       </Field>
 
-      <button className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
+      <button className="btn btn-primary" disabled={busy} aria-busy={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
     </form>
   );
 }

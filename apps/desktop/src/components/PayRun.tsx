@@ -34,7 +34,7 @@ export function OpenPeriod() {
           {error ? <div className="alert" role="alert">{error}</div> : null}
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
             <button
-              className="btn btn-primary" disabled={busy || !startsOn || !endsOn}
+              className="btn btn-primary" disabled={busy || !startsOn || !endsOn} aria-busy={busy}
               onClick={() => call(() => openPayPeriodAction({ startsOn, endsOn }), () => setOpen(false))}
             >
               {busy ? 'Opening…' : 'Open it'}
@@ -135,7 +135,7 @@ export function EnterPay({
           {error ? <div className="alert" role="alert">{error}</div> : null}
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
             <button
-              className="btn btn-primary" disabled={busy || !employeeId || !gross}
+              className="btn btn-primary" disabled={busy || !employeeId || !gross} aria-busy={busy}
               onClick={() => call(() => recordPayAction({
                 periodId, employeeId,
                 gross: g, tax: t, net: n || g - t,
@@ -159,7 +159,7 @@ export function ClosePeriod({ periodId, lines }: { periodId: string; lines: numb
   return (
     <>
       <button
-        className="btn btn-sm btn-primary" disabled={busy || lines === 0}
+        className="btn btn-sm btn-primary" disabled={busy || lines === 0} aria-busy={busy}
         onClick={() => call(() => markPeriodPaidAction(periodId))}
       >
         {busy ? 'Recording…' : 'Record as paid'}
@@ -177,7 +177,7 @@ export function SlipActions({ record }: { record: PayRecord }) {
     <div className="row" style={{ justifyContent: 'flex-end' }}>
       {!record.slip_issued_at ? (
         <button
-          className="btn btn-sm" disabled={busy}
+          className="btn btn-sm" disabled={busy} aria-busy={busy}
           /*
            * Naming the person in the confirmation. Issuing one slip on a page
            * where others were already issued looks exactly like issuing all of
@@ -193,7 +193,7 @@ export function SlipActions({ record }: { record: PayRecord }) {
         </button>
       ) : null}
       {!record.super_paid_on ? (
-        <button className="btn btn-sm" disabled={busy} onClick={() => call(() => recordSuperPaidAction(record.id))}>
+        <button className="btn btn-sm" disabled={busy} aria-busy={busy} onClick={() => call(() => recordSuperPaidAction(record.id))}>
           Super paid
         </button>
       ) : null}
@@ -242,7 +242,7 @@ export function IssueAllSlips({ periodId, owed }: { periodId: string; owed: numb
   return (
     <>
       <button
-        className="btn btn-sm btn-primary" disabled={busy}
+        className="btn btn-sm btn-primary" disabled={busy} aria-busy={busy}
         onClick={() => call(
           () => issueAllPaySlipsAction(periodId),
           undefined,

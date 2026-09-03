@@ -86,7 +86,7 @@ export function TaskForm({
       </div>
 
       <div className="row" style={{ marginTop: 8 }}>
-        <button className="btn btn-primary" disabled={busy}>
+        <button className="btn btn-primary" disabled={busy} aria-busy={busy}>
           {busy ? 'Saving…' : task ? 'Save changes' : 'Create task'}
         </button>
         <button type="button" className="btn" onClick={() => router.back()}>Cancel</button>

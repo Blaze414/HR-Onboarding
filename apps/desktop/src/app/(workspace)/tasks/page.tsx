@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-  courseService, employeeService, EMPTY_STATES, formatRelativeDay,
+  courseService, relativeDueLabel, employeeService, EMPTY_STATES,
   TASK_PRIORITIES, TASK_STATUSES, taskService,
 } from '@snoopy/shared';
 import { ClearFilters, SearchInput, SelectFilter } from '@/components/Filters';
@@ -72,7 +72,7 @@ export default async function TasksPage({
                 ) : null}
                 <td><StatusBadge status={t.status} /></td>
                 <td><StatusBadge status={t.priority} /></td>
-                <td className="subtle nowrap">{formatRelativeDay(t.due_date)}</td>
+                <td className="subtle nowrap">{relativeDueLabel(t.due_date, t.status === 'Completed')}</td>
                 <td className="subtle">{t.course?.title ?? '—'}</td>
               </tr>
             ))}

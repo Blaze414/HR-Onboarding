@@ -10,18 +10,38 @@ export function Card({
   children, style, onPress,
 }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void }) {
   const styles = useStyles(makeStyles);
+  const press = usePressLift();
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed, style]}
-        accessibilityRole="button"
-      >
-        {children}
-      </Pressable>
+      <Animated.View style={press.style}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={press.onPressIn}
+          onPressOut={press.onPressOut}
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed, style]}
+          accessibilityRole="button"
+        >
+          {children}
+        </Pressable>
+      </Animated.View>
     );
   }
   return <View style={[styles.card, style]}>{children}</View>;
+}
+
+/**
+ * Presses down rather than just dimming — the same "press is the feedback"
+ * physics as the desktop button system, translated to a native gesture.
+ */
+function usePressLift(distance = 2) {
+  const value = useRef(new Animated.Value(0)).current;
+  const animate = (toValue: number) =>
+    Animated.timing(value, { toValue, duration: toValue ? 70 : 140, useNativeDriver: true }).start();
+  return {
+    onPressIn: () => animate(1),
+    onPressOut: () => animate(0),
+    style: { transform: [{ translateY: value.interpolate({ inputRange: [0, 1], outputRange: [0, distance] }) }] },
+  };
 }
 
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
@@ -91,27 +111,32 @@ export function Button({
   const styles = useStyles(makeStyles);
   const { colors } = useTheme();
   const isPrimary = variant === 'primary';
+  const press = usePressLift(isPrimary ? 3 : 1);
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled || busy}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled, busy: !!busy }}
-      style={({ pressed }) => [
-        styles.button,
-        isPrimary && styles.buttonPrimary,
-        variant === 'ghost' && styles.buttonGhost,
-        pressed && styles.buttonPressed,
-        (disabled || busy) && styles.buttonDisabled,
-        style,
-      ]}
-    >
-      {busy ? (
-        <ActivityIndicator color={isPrimary ? colors.onAccent : colors.ink} />
-      ) : (
-        <Text style={[styles.buttonLabel, isPrimary && styles.buttonLabelPrimary]}>{label}</Text>
-      )}
-    </Pressable>
+    <Animated.View style={press.style}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={press.onPressIn}
+        onPressOut={press.onPressOut}
+        disabled={disabled || busy}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!disabled, busy: !!busy }}
+        style={({ pressed }) => [
+          styles.button,
+          isPrimary && styles.buttonPrimary,
+          variant === 'ghost' && styles.buttonGhost,
+          pressed && styles.buttonPressed,
+          (disabled || busy) && styles.buttonDisabled,
+          style,
+        ]}
+      >
+        {busy ? (
+          <ActivityIndicator color={isPrimary ? colors.onAccent : colors.ink} />
+        ) : (
+          <Text style={[styles.buttonLabel, isPrimary && styles.buttonLabelPrimary]}>{label}</Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -261,7 +286,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: spacing.md, marginTop: spacing.sm,
   },
-  badge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: radius.pill, alignSelf: 'flex-start' },
+  badge: { paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, alignSelf: 'flex-start' },
   badgeText: { fontSize: 12, fontWeight: '700' },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   progressTrack: { flex: 1, height: 7, borderRadius: radius.pill, backgroundColor: colors.rail, overflow: 'hidden' },
@@ -273,7 +298,7 @@ const makeStyles = (colors: Colors) => StyleSheet.create({
   },
   statHint: { fontSize: 12, color: colors.inkMuted },
   button: {
-    minHeight: TAP_TARGET, borderRadius: radius.md, paddingHorizontal: spacing.lg,
+    minHeight: TAP_TARGET, borderRadius: radius.pill, paddingHorizontal: spacing.lg,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: colors.railStrong, backgroundColor: colors.surface,
   },

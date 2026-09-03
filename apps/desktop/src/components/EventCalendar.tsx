@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { formatDateTime, type EventResponse, type WorkEvent } from '@snoopy/shared';
+import { formatDateTime, LOCALE, type EventResponse, type WorkEvent } from '@snoopy/shared';
 import { Icon } from './Icon';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -49,7 +49,7 @@ export function EventCalendar({
   }, [events]);
 
   const days = monthGrid(cursor);
-  const monthLabel = cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const monthLabel = cursor.toLocaleDateString(LOCALE, { month: 'long', year: 'numeric' });
   const selectedEvents = byDay.get(selected) ?? [];
   const selectedDate = new Date(`${selected}T00:00:00`);
 
@@ -105,7 +105,7 @@ export function EventCalendar({
                   ].filter(Boolean).join(' ')}
                   onClick={() => setSelected(key)}
                   aria-current={isToday ? 'date' : undefined}
-                  aria-label={`${day.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}${
+                  aria-label={`${day.toLocaleDateString(LOCALE, { day: 'numeric', month: 'long' })}${
                     dayEvents.length ? `, ${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}` : ', no events'
                   }`}
                 >
@@ -124,7 +124,7 @@ export function EventCalendar({
 
       <section className="card">
         <div className="card-head">
-          <h2>{selectedDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+          <h2>{selectedDate.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
           {canCreate ? (
             <Link className="btn btn-sm btn-primary" href={`/events/new?date=${selected}`}>
               <Icon name="plus" size={15} /> Add
@@ -142,7 +142,7 @@ export function EventCalendar({
                 return (
                   <Link key={e.id} href={`/events/${e.id}`} className="day-event">
                     <span className="time">
-                      {new Date(e.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                      {new Date(e.start_time).toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' })}
                     </span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span className="title">{e.title}</span>

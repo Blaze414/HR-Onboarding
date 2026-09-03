@@ -5,49 +5,52 @@ import {
 import { useColorScheme } from 'react-native';
 
 /**
- * The mobile app shares the desktop's world — newsprint ground, ink panels,
- * one spot red — in both light and dark, and sizes everything for thumbs.
+ * The mobile app shares the desktop's world — warm cream ground, soft rounded
+ * panels, one coral accent — in both light and dark, and sizes everything for
+ * thumbs. Kept in sync with apps/desktop/src/app/globals.css's :root tokens
+ * (converted from OKLCH to sRGB hex, since RN's style parser doesn't resolve
+ * oklch()).
  */
 const light = {
-  bg: '#f1eee6',
-  surface: '#fffefb',
-  surfaceMuted: '#f8f6ef',
-  rail: '#e0dbcd',
-  railStrong: '#c9c2ae',
-  ink: '#16150f',
-  inkMuted: '#5c584c',
-  inkSubtle: '#857f70',
-  accent: '#b23a2e',
-  accentInk: '#8a2c22',
-  accentSoft: '#f8e7e2',
-  ok: '#3a6f4b',
-  okSoft: '#e6efe6',
-  warn: '#8a5a12',
-  warnSoft: '#f8eeda',
-  info: '#2c5679',
-  infoSoft: '#e6eef4',
-  onAccent: '#fffefb',
+  bg: '#f8f5eb',
+  surface: '#fefcf8',
+  surfaceMuted: '#f2efe2',
+  rail: '#e4dece',
+  railStrong: '#cac0ac',
+  ink: '#241b15',
+  inkMuted: '#61554e',
+  inkSubtle: '#8c8179',
+  accent: '#d33b36',
+  accentInk: '#a51e27',
+  accentSoft: '#ffe0da',
+  ok: '#26894c',
+  okSoft: '#d4f1d8',
+  warn: '#ac6900',
+  warnSoft: '#f7e6c3',
+  info: '#007bad',
+  infoSoft: '#d6ecf9',
+  onAccent: '#fcfcf9',
 };
 
 const dark: typeof light = {
-  bg: '#14120e',
-  surface: '#1c1a15',
-  surfaceMuted: '#23201a',
-  rail: '#322e26',
-  railStrong: '#4a453a',
-  ink: '#f3efe4',
-  inkMuted: '#b3ac9c',
-  inkSubtle: '#8b8474',
-  accent: '#d9614f',
-  accentInk: '#f0a396',
-  accentSoft: '#3a231e',
-  ok: '#7cbb8f',
-  okSoft: '#1f2d23',
-  warn: '#d9a45c',
-  warnSoft: '#322616',
-  info: '#85b2d8',
-  infoSoft: '#1a2733',
-  onAccent: '#16130f',
+  bg: '#18120f',
+  surface: '#251e19',
+  surfaceMuted: '#2f2721',
+  rail: '#40362f',
+  railStrong: '#5c5048',
+  ink: '#f1eee7',
+  inkMuted: '#b6b0a6',
+  inkSubtle: '#867f76',
+  accent: '#fd7562',
+  accentInk: '#ffa48a',
+  accentSoft: '#4d2620',
+  ok: '#6cc581',
+  okSoft: '#1a3520',
+  warn: '#e3ad4b',
+  warnSoft: '#432f07',
+  info: '#6dbbe8',
+  infoSoft: '#103243',
+  onAccent: '#0f0a07',
 };
 
 export type Colors = typeof light;

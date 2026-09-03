@@ -88,7 +88,7 @@ function Form() {
         {errors.password ? <span className="error" id="password-error">{errors.password}</span> : null}
       </div>
 
-      <button className="btn btn-primary" style={{ width: '100%' }} disabled={busy}>
+      <button className="btn btn-primary" style={{ width: '100%' }} disabled={busy} aria-busy={busy}>
         {busy ? 'Signing in…' : 'Sign in'}
       </button>
 

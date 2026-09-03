@@ -34,7 +34,7 @@ export function StartOnboarding({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (!employeeId || !templateId) { setError('Choose an employee and a template.'); return; }
                   call(

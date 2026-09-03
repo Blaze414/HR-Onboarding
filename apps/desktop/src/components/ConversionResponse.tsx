@@ -1,6 +1,6 @@
 'use client';
 
-import { REFUSAL_GROUNDS, type ConversionNotice, type RefusalGround } from '@snoopy/shared';
+import { LOCALE, REFUSAL_GROUNDS, type ConversionNotice, type RefusalGround } from '@snoopy/shared';
 import { useState } from 'react';
 import {
   acceptConversionAction, recordConsultationAction, refuseConversionAction,
@@ -29,7 +29,7 @@ export function ConversionResponse({ notice }: { notice: ConversionNotice }) {
     return (
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         <button
-          className="btn btn-sm" disabled={busy}
+          className="btn btn-sm" disabled={busy} aria-busy={busy}
           onClick={() => call(() => recordConsultationAction(notice.id))}
         >
           <Icon name="check" size={15} /> {busy ? 'Recording…' : 'Record consultation'}
@@ -48,7 +48,7 @@ export function ConversionResponse({ notice }: { notice: ConversionNotice }) {
       {open ? (
         <Overlay title={`Answer ${notice.employee_name}`} onClose={() => setOpen(false)}>
           <p className="muted">
-            Consulted {new Date(notice.consulted_at).toLocaleDateString()}. This answer is the
+            Consulted {new Date(notice.consulted_at).toLocaleDateString(LOCALE)}. This answer is the
             written response required within 21 days, and it is kept on the record.
           </p>
 
@@ -97,7 +97,7 @@ export function ConversionResponse({ notice }: { notice: ConversionNotice }) {
 
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
             <button
-              className="btn btn-primary" disabled={busy}
+              className="btn btn-primary" disabled={busy} aria-busy={busy}
               onClick={() => call(
                 () => (decision === 'accept'
                   ? acceptConversionAction({ id: notice.id, hours, basis, note })

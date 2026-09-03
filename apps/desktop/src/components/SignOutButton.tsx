@@ -10,7 +10,7 @@ export function SignOutButton() {
   return (
     <button
       className="btn btn-sm btn-ghost"
-      disabled={busy}
+      disabled={busy} aria-busy={busy}
       onClick={async () => {
         setBusy(true);
         await getBrowserSupabase().auth.signOut();

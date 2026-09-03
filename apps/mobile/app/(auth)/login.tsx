@@ -74,7 +74,7 @@ export default function LoginScreen() {
 
         <View style={{ height: spacing.xl }} />
         <ErrorNotice message={formError} />
-        {formError ? (
+        {__DEV__ && formError ? (
           <Text style={styles.backend} accessibilityLabel={`Backend address ${backendUrl}`}>
             Tried {backendUrl}
           </Text>

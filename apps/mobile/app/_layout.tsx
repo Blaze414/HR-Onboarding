@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { setupProgressiveWebApp } from '@/lib/pwa';
@@ -180,6 +180,11 @@ function WrongDevice() {
   // refusal that cannot offer the way out says so rather than showing a dead
   // button.
   const workspace = desktopUrl();
+  // No ThemeProvider is mounted yet (see comment above), so this reads the
+  // scheme directly rather than through context — the same palette as the
+  // rest of the app, without needing the provider tree to exist first.
+  const scheme = useColorScheme();
+  const refusal = scheme === 'dark' ? refusalDark : refusalLight;
 
   return (
     <View style={refusal.screen}>
@@ -207,26 +212,40 @@ function WrongDevice() {
   );
 }
 
-const refusal = StyleSheet.create({
-  screen: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 32, gap: 12, backgroundColor: '#f1eee6',
-  },
-  title: {
-    fontSize: 22, fontWeight: '600', color: '#16150f',
-    textAlign: 'center', lineHeight: 28, maxWidth: 420,
-  },
-  body: {
-    fontSize: 15, color: '#5c584c', textAlign: 'center',
-    lineHeight: 22, maxWidth: 420,
-  },
-  action: {
-    marginTop: 6, paddingVertical: 12, paddingHorizontal: 22,
-    borderRadius: 10, backgroundColor: '#b23a2e',
-  },
-  actionPressed: { opacity: 0.85 },
-  actionLabel: { color: '#fffefb', fontSize: 15, fontWeight: '600' },
-  hint: { fontSize: 13, color: '#857f70', textAlign: 'center', maxWidth: 420 },
+// Matches apps/desktop/src/app/globals.css's :root tokens (see src/theme/index.tsx).
+// Duplicated as static hex rather than imported, since this screen renders
+// before ThemeProvider — and before any React context — exists.
+function makeRefusal(colors: { bg: string; ink: string; inkMuted: string; inkSubtle: string; accent: string; onAccent: string }) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1, alignItems: 'center', justifyContent: 'center',
+      paddingHorizontal: 32, gap: 12, backgroundColor: colors.bg,
+    },
+    title: {
+      fontSize: 22, fontWeight: '700', color: colors.ink,
+      textAlign: 'center', lineHeight: 28, maxWidth: 420,
+    },
+    body: {
+      fontSize: 15, color: colors.inkMuted, textAlign: 'center',
+      lineHeight: 22, maxWidth: 420,
+    },
+    action: {
+      marginTop: 6, paddingVertical: 12, paddingHorizontal: 22,
+      borderRadius: 999, backgroundColor: colors.accent,
+    },
+    actionPressed: { opacity: 0.85 },
+    actionLabel: { color: colors.onAccent, fontSize: 15, fontWeight: '600' },
+    hint: { fontSize: 13, color: colors.inkSubtle, textAlign: 'center', maxWidth: 420 },
+  });
+}
+
+const refusalLight = makeRefusal({
+  bg: '#f8f5eb', ink: '#241b15', inkMuted: '#61554e', inkSubtle: '#8c8179',
+  accent: '#d33b36', onAccent: '#fcfcf9',
+});
+const refusalDark = makeRefusal({
+  bg: '#18120f', ink: '#f1eee7', inkMuted: '#b6b0a6', inkSubtle: '#867f76',
+  accent: '#fd7562', onAccent: '#0f0a07',
 });
 
 function ThemedStatusBar() {

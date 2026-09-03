@@ -92,7 +92,7 @@ export function EventForm({
       </Field>
 
       <div className="row" style={{ marginTop: 8 }}>
-        <button className="btn btn-primary" disabled={busy}>
+        <button className="btn btn-primary" disabled={busy} aria-busy={busy}>
           {busy ? 'Saving…' : event ? 'Save changes' : 'Create event'}
         </button>
         <button type="button" className="btn" onClick={() => router.back()}>Cancel</button>

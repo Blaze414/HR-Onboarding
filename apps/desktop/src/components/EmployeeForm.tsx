@@ -259,7 +259,7 @@ export function EmployeeForm({
       ) : null}
 
       <div className="row" style={{ marginTop: 8 }}>
-        <button className="btn btn-primary" disabled={busy}>
+        <button className="btn btn-primary" disabled={busy} aria-busy={busy}>
           {busy ? 'Saving…' : employee ? 'Save changes' : 'Add employee'}
         </button>
         <button type="button" className="btn" onClick={() => router.back()}>Cancel</button>

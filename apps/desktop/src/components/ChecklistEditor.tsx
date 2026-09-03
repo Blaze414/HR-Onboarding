@@ -64,7 +64,7 @@ export function ChecklistEditor({
             <>
               {checklist ? (
                 <button
-                  className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy}
+                  className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy} aria-busy={busy}
                   onClick={() => {
                     if (!window.confirm(`Delete "${checklist.name}"? Requests already raised are kept.`)) return;
                     call(() => deleteChecklistAction(checklist.id), () => setOpen(false));
@@ -75,7 +75,7 @@ export function ChecklistEditor({
               ) : null}
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (name.trim().length < 2) { setError('Give the checklist a name.'); return; }
                   call(

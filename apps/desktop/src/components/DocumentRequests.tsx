@@ -100,7 +100,7 @@ export function DocumentRequests({
                 ) : !canSubmit ? (
                   <span className="subtle">Ask your administrator to return this for you.</span>
                 ) : (
-                  <label className="btn btn-sm btn-primary" style={{ cursor: 'pointer' }}>
+                  <label className="btn btn-sm btn-primary" style={{ cursor: 'pointer' }} aria-busy={busyId === request.id}>
                     {busyId === request.id ? 'Uploading…' : returned ? 'Upload again' : 'Upload signed copy'}
                     <input
                       type="file" hidden disabled={busyId === request.id}

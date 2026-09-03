@@ -76,7 +76,7 @@ export function SavedViews({ views, ownerId }: { views: SavedView[]; ownerId: st
               <button className="btn" onClick={() => setNaming(false)}>Cancel</button>
               <button
                 className="btn btn-primary"
-                disabled={busy || !name.trim()}
+                disabled={busy || !name.trim()} aria-busy={busy}
                 onClick={() => call(
                   () => saveViewAction({ name, path: pathname, query, isShared: shared }),
                   () => setNaming(false),

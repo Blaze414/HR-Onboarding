@@ -7,7 +7,7 @@ import {
   reviewCredentialsAction, reviewDocumentRequestsAction, verifyAssignmentsAction,
 } from '@/lib/actions';
 import { Field, Overlay, useAction } from './Interactive';
-import { Person, TableCard } from './ui';
+import { Card, Person } from './ui';
 
 /**
  * One group of the queue, cleared in batches.
@@ -73,62 +73,62 @@ export function WorklistGroup({
   };
 
   return (
-    <TableCard
-      title={`${title} · ${rows.length}`}
-      action={bulk ? (
-        <div className="row" style={{ gap: 8 }}>
-          <button
-            className="btn btn-sm"
-            onClick={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))}
-          >
-            {allSelected ? 'Clear' : 'Select all'}
-          </button>
-          <button
-            className="btn btn-sm btn-primary"
-            disabled={busy || selected.size === 0}
-            onClick={() => (bulk.needsMethod ? setAsking(true) : clear())}
-          >
-            {busy ? 'Working…' : `${bulk.verb} ${selected.size || ''}`.trim()}
-          </button>
+    <Card
+      title={title}
+      action={(
+        <div className="row" style={{ gap: 12 }}>
+          <span className="count-badge">{rows.length}</span>
+          {bulk ? (
+            <div className="row" style={{ gap: 8 }}>
+              <button
+                className="btn btn-sm"
+                onClick={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)))}
+              >
+                {allSelected ? 'Clear' : 'Select all'}
+              </button>
+              <button
+                className="btn btn-sm btn-primary"
+                disabled={busy || selected.size === 0} aria-busy={busy}
+                onClick={() => (bulk.needsMethod ? setAsking(true) : clear())}
+              >
+                {busy ? 'Working…' : `${bulk.verb} ${selected.size || ''}`.trim()}
+              </button>
+            </div>
+          ) : null}
         </div>
-      ) : undefined}
+      )}
+      tight
     >
       <p className="worklist-blurb">{blurb}</p>
-      {error ? <div className="alert" role="alert" style={{ margin: 14 }}>{error}</div> : null}
+      {error ? <div className="alert" role="alert" style={{ margin: '0 0 14px' }}>{error}</div> : null}
 
-      <table className="table">
-        <thead>
-          <tr>
-            {bulk ? <th style={{ width: 36 }} /> : null}
-            <th>Person</th><th>What</th><th>Waiting</th><th />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((item) => (
-            <tr key={`${item.kind}-${item.id}`}>
-              {bulk ? (
-                <td>
-                  <input
-                    type="checkbox" className="checkbox"
-                    checked={selected.has(item.id)}
-                    onChange={(e) => toggle(item.id, e.target.checked)}
-                    aria-label={`Select ${item.person}, ${item.what}`}
-                  />
-                </td>
-              ) : null}
-              <td><Person name={item.person} href={`/employees/${item.personId}`} /></td>
-              <td>
-                <span style={{ fontWeight: 560 }}>{item.what}</span>
-                <div className="subtle">{item.detail}</div>
-              </td>
-              <td className="nowrap"><Waiting item={item} /></td>
-              <td className="actions">
-                <Link className="btn btn-sm" href={item.href}>Open</Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/*
+       * A queue, not a data grid: no header row, no cell borders — one to
+       * five items don't need column labels to stay legible, and the labels
+       * were the loudest thing on a page whose only job is "here's what's
+       * waiting, go open it".
+       */}
+      <div className="worklist-rows">
+        {rows.map((item) => (
+          <div className="worklist-row" key={`${item.kind}-${item.id}`}>
+            {bulk ? (
+              <input
+                type="checkbox" className="checkbox"
+                checked={selected.has(item.id)}
+                onChange={(e) => toggle(item.id, e.target.checked)}
+                aria-label={`Select ${item.person}, ${item.what}`}
+              />
+            ) : null}
+            <Person name={item.person} href={`/employees/${item.personId}`} />
+            <div className="worklist-row-what">
+              <span style={{ fontWeight: 560 }}>{item.what}</span>
+              <div className="subtle">{item.detail}</div>
+            </div>
+            <Waiting item={item} />
+            <Link className="btn btn-sm" href={item.href}>Open</Link>
+          </div>
+        ))}
+      </div>
 
       {asking ? (
         <Overlay
@@ -137,7 +137,7 @@ export function WorklistGroup({
           footer={
             <>
               <button className="btn" onClick={() => setAsking(false)}>Cancel</button>
-              <button className="btn btn-primary" disabled={busy || !method} onClick={clear}>
+              <button className="btn btn-primary" disabled={busy || !method} aria-busy={busy} onClick={clear}>
                 {busy ? 'Accepting…' : 'Accept'}
               </button>
             </>
@@ -158,7 +158,7 @@ export function WorklistGroup({
           </p>
         </Overlay>
       ) : null}
-    </TableCard>
+    </Card>
   );
 }
 

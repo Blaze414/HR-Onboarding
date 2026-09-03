@@ -1,25 +1,32 @@
-/* Snoopy Workplace — desktop design system.
+/* Hallmark · macrostructure: component-scope (shared design-system redesign, not a page build) · tone: soft
+ * theme: custom (vibe: "warm HR home base, rounded and alive" · paper oklch(97% 0.014 95) · accent oklch(58% 0.19 27) coral · Plus Jakarta Sans)
+ * redesign: replaced palette + type system in place; every selector below kept its name so no route/component was touched.
+ * Snoopy Workplace — desktop design system.
  *
- * World: "panel and newsprint". The subject is a comic-strip studio, so the
- * surfaces borrow from newsprint rather than from dashboard chrome: a warm
- * paper ground, ink-drawn panel borders, one spot red carried over from strip
- * printing, and a serif that behaves like a caption face.
+ * World: "warm front desk". The subject is a people-and-work hub, so the
+ * surfaces borrow from a well-run reception rather than dashboard chrome: a
+ * cream paper ground, big soft-rounded panels, one coral accent that carries
+ * every action, and a rounded sans that reads friendly at desk distance.
  *
- * Elevation is declared once per surface: panels carry a border and no shadow,
- * overlays carry a shadow and no border.
+ * `--danger` is deliberately its own hue, separate from `--accent`: the
+ * accent drives ordinary primary actions ("Accept", "Save"), while danger is
+ * reserved for what genuinely needs urgency (overdue, lapsed, blocking). They
+ * used to share one red — a button asking for a routine click looked exactly
+ * like a badge warning something is late, which blunts the one signal a busy
+ * HR queue actually needs. Kept close in family (still warm) so the two read
+ * as "this app has one voice," not two unrelated palettes.
+ *
+ * Elevation is declared once per surface: panels carry a hairline + a soft
+ * ambient shadow, overlays carry a stronger cast shadow and no border.
  */
 
+/* Self-hosted rather than @import'd — the app's CSP is `style-src 'self'`, so
+ * an external Google Fonts stylesheet is blocked outright (and fails silently
+ * as an uncaught link error). One variable-weight woff2 covers 400–800. */
 @font-face {
-  font-family: 'Fraunces';
-  src: url('/fonts/fraunces-latin.woff2') format('woff2');
-  font-weight: 300 700;
-  font-display: swap;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Instrument Sans';
-  src: url('/fonts/instrument-sans-latin.woff2') format('woff2');
-  font-weight: 400 700;
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/plus-jakarta-sans-latin.woff2') format('woff2');
+  font-weight: 400 800;
   font-display: swap;
   font-style: normal;
 }
@@ -27,112 +34,135 @@
 :root {
   color-scheme: light;
 
-  /* newsprint ground → paper surface → panel rail */
-  --bg:            #f1eee6;
-  --surface:       #fffefb;
-  --surface-muted: #f8f6ef;
-  --rail:          #e0dbcd;
-  --rail-strong:   #c9c2ae;
+  /* cream ground → paper surface → panel rail */
+  --bg:            oklch(97% 0.014 95);
+  --surface:       oklch(99.2% 0.006 95);
+  --surface-muted: oklch(95% 0.017 95);
+  --rail:          oklch(90% 0.022 90);
+  --rail-strong:   oklch(81% 0.03 85);
 
-  --ink:        #16150f;
-  --ink-muted:  #5c584c;
-  --ink-subtle: #857f70;
+  --ink:        oklch(23% 0.018 55);
+  --ink-muted:  oklch(46% 0.02 55);
+  --ink-subtle: oklch(61% 0.018 60);
 
-  --accent:      #b23a2e;
-  --accent-ink:  #8a2c22;
-  --accent-soft: #f8e7e2;
+  /* Primary actions — buttons, focus rings, links. Warm coral, not red.
+     DO NOT reach for this to color a new "urgent/overdue/error" surface —
+     that's --danger below. The two were merged once already (same red for
+     "Accept" and "overdue"), which blunted the one signal a busy queue
+     needs; don't remerge them by accident on the next feature. */
+  --accent:      oklch(58% 0.19 27);
+  --accent-ink:  oklch(47% 0.17 24);
+  --accent-soft: oklch(93% 0.035 30);
 
-  --ok:        #3a6f4b;
-  --ok-soft:   #e6efe6;
-  --warn:      #8a5a12;
-  --warn-soft: #f8eeda;
-  --info:      #2c5679;
-  --info-soft: #e6eef4;
+  /* Urgency only — overdue, lapsed, blocking, errors. Its own hue so it never
+     gets mistaken for "click here", and never gets diluted by ordinary
+     actions sharing its color. New "something's wrong" UI reaches for THIS,
+     never --accent, even if the "brand" instinct says use the main color. */
+  --danger:      oklch(53% 0.22 18);
+  --danger-ink:  oklch(43% 0.20 16);
+  --danger-soft: oklch(93% 0.045 20);
 
-  --on-accent: #fffefb;
+  --ok:        oklch(56% 0.13 152);
+  --ok-soft:   oklch(93% 0.045 150);
+  --warn:      oklch(58% 0.15 75);
+  --warn-soft: oklch(93% 0.05 85);
+  --info:      oklch(55% 0.12 235);
+  --info-soft: oklch(93% 0.03 235);
 
-  --radius-sm: 6px;
-  --radius:    10px;
-  --radius-lg: 14px;
+  --on-accent: oklch(99% 0.004 95);
+  --on-danger: oklch(99% 0.004 95);
 
-  /* Overlays only. Panels never take a shadow. */
-  --shadow-overlay: 0 18px 44px -12px rgba(22, 21, 15, 0.28);
+  --radius-sm:   12px;
+  --radius:      20px;
+  --radius-lg:   26px;
+  --radius-pill: 999px;
+
+  /* Overlays only. Panels carry a soft ambient shadow instead. */
+  --shadow-card:    0 10px 26px -16px oklch(23% 0.018 55 / 0.18);
+  --shadow-overlay: 0 24px 56px -14px oklch(23% 0.018 55 / 0.32);
 
   --sidebar-w: 244px;
   --topbar-h:  60px;
 
-  --sans: 'Instrument Sans', ui-sans-serif, -apple-system, 'Segoe UI', sans-serif;
-  --serif: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --sans: 'Plus Jakarta Sans', ui-rounded, ui-sans-serif, -apple-system, 'Segoe UI', sans-serif;
+  --serif: var(--sans);
 
-  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease:        cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --fast: 140ms;
   --base: 200ms;
 }
 
 /*
- * Dark mode keeps the same world: the paper simply becomes late-edition
- * newsprint under lamplight. Only the palette is redefined — every structural
- * token above still applies, and the ink red is lifted so it clears contrast
- * against a dark ground.
+ * Dark mode keeps the same world: the room's lights go down, the coral stays
+ * the one thing that carries action. Only the palette is redefined — every
+ * structural token above still applies.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --bg:            #14120e;
-    --surface:       #1c1a15;
-    --surface-muted: #23201a;
-    --rail:          #322e26;
-    --rail-strong:   #4a453a;
+    --bg:            oklch(19% 0.012 55);
+    --surface:       oklch(24% 0.014 55);
+    --surface-muted: oklch(28% 0.016 55);
+    --rail:          oklch(40% 0.02 55);
+    --rail-strong:   oklch(50% 0.022 55);
 
-    --ink:        #f3efe4;
-    --ink-muted:  #b3ac9c;
-    --ink-subtle: #8b8474;
+    --ink:        oklch(95% 0.01 90);
+    --ink-muted:  oklch(76% 0.016 80);
+    --ink-subtle: oklch(60% 0.016 75);
 
-    --accent:      #d9614f;
-    --accent-ink:  #f0a396;
-    --accent-soft: #3a231e;
+    --accent:      oklch(72% 0.17 30);
+    --accent-ink:  oklch(82% 0.13 35);
+    --accent-soft: oklch(32% 0.06 30);
 
-    --ok:        #7cbb8f;
-    --ok-soft:   #1f2d23;
-    --warn:      #d9a45c;
-    --warn-soft: #322616;
-    --info:      #85b2d8;
-    --info-soft: #1a2733;
+    --danger:      oklch(68% 0.19 20);
+    --danger-ink:  oklch(80% 0.14 22);
+    --danger-soft: oklch(32% 0.07 20);
 
-    --on-accent: #16130f;
+    --ok:        oklch(75% 0.13 150);
+    --ok-soft:   oklch(30% 0.05 150);
+    --warn:      oklch(78% 0.13 80);
+    --warn-soft: oklch(32% 0.06 80);
+    --info:      oklch(76% 0.1 235);
+    --info-soft: oklch(30% 0.05 235);
 
-    --shadow-overlay: 0 18px 44px -12px rgba(0, 0, 0, 0.6);
+    --on-accent: oklch(15% 0.01 55);
+    --on-danger: oklch(15% 0.01 55);
+
+    --shadow-card:    0 10px 26px -16px oklch(0% 0 0 / 0.5);
+    --shadow-overlay: 0 24px 56px -14px oklch(0% 0 0 / 0.6);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg:            #14120e;
-  --surface:       #1c1a15;
-  --surface-muted: #23201a;
-  --rail:          #322e26;
-  --rail-strong:   #4a453a;
+  --bg:            oklch(19% 0.012 55);
+  --surface:       oklch(24% 0.014 55);
+  --surface-muted: oklch(28% 0.016 55);
+  --rail:          oklch(40% 0.02 55);
+  --rail-strong:   oklch(50% 0.022 55);
 
-  --ink:        #f3efe4;
-  --ink-muted:  #b3ac9c;
-  --ink-subtle: #8b8474;
+  --ink:        oklch(95% 0.01 90);
+  --ink-muted:  oklch(76% 0.016 80);
+  --ink-subtle: oklch(60% 0.016 75);
 
-  --accent:      #d9614f;
-  --accent-ink:  #f0a396;
-  --accent-soft: #3a231e;
+  --accent:      oklch(72% 0.17 30);
+  --accent-ink:  oklch(82% 0.13 35);
+  --accent-soft: oklch(32% 0.06 30);
 
-  --ok:        #7cbb8f;
-  --ok-soft:   #1f2d23;
-  --warn:      #d9a45c;
-  --warn-soft: #322616;
-  --info:      #85b2d8;
-  --info-soft: #1a2733;
+  --ok:        oklch(75% 0.13 150);
+  --ok-soft:   oklch(30% 0.05 150);
+  --warn:      oklch(78% 0.13 80);
+  --warn-soft: oklch(32% 0.06 80);
+  --info:      oklch(76% 0.1 235);
+  --info-soft: oklch(30% 0.05 235);
 
-  --on-accent: #16130f;
+  --on-accent: oklch(15% 0.01 55);
 
-  --shadow-overlay: 0 18px 44px -12px rgba(0, 0, 0, 0.6);
+  --shadow-card:    0 10px 26px -16px oklch(0% 0 0 / 0.5);
+  --shadow-overlay: 0 24px 56px -14px oklch(0% 0 0 / 0.6);
 }
 
 * { box-sizing: border-box; }
@@ -150,14 +180,20 @@ html, body {
 
 /* Browser surfaces belong to the design too. */
 ::selection { background: var(--accent-soft); color: var(--accent-ink); }
-html { caret-color: var(--accent); scrollbar-color: var(--rail-strong) transparent; }
+/* Present only while actually in use, not sitting permanently against the
+   page's own controls — invisible at rest, fades in on hover/scroll. */
+html { caret-color: var(--accent); scrollbar-color: transparent transparent; }
+html:hover, html:focus-within { scrollbar-color: var(--rail-strong) transparent; }
 ::-webkit-scrollbar { width: 11px; height: 11px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--rail-strong); border-radius: 999px;
+  background: transparent; border-radius: 999px;
   border: 3px solid var(--bg); background-clip: padding-box;
+  transition: background var(--fast) var(--ease);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-subtle); background-clip: padding-box; }
+html:hover ::-webkit-scrollbar-thumb,
+html:focus-within ::-webkit-scrollbar-thumb { background: var(--rail-strong); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-subtle) !important; background-clip: padding-box; }
 
 a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -171,9 +207,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 h1, h2, h3 {
   margin: 0;
   font-family: var(--serif);
-  font-variation-settings: 'SOFT' 20, 'WONK' 1, 'opsz' 40;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.15;
 }
 h1 { font-size: 28px; }
@@ -215,7 +250,10 @@ p  { margin: 0; }
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px; border-radius: var(--radius-sm);
   color: var(--ink-muted); font-size: 14px; font-weight: 500;
-  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+  /* box-shadow carries the active rail (below) — without it here, the
+     comment two rules down claiming the rail "slides between items" was
+     lying: background eased in, the rail itself just snapped. */
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
 .nav-item:hover { background: var(--surface); color: var(--ink); }
 .nav-item[aria-current="page"] {
@@ -249,11 +287,17 @@ p  { margin: 0; }
  * section cannot be added wrongly.
  */
 .content { padding: 26px; max-width: 1560px; width: 100%; }
-.content > * + * { margin-top: 18px; }
+/* The page-transition wrapper (template.tsx) sits between `.content` and the
+   page's own sections, so the rhythm has to reach one level past its direct
+   children too — otherwise every route's sections read as touching. */
+.content > * + *,
+.content > .page-transition > * + * { margin-top: 26px; }
 
 /* These already carry their own trailing space; the stack would double it. */
 .content > .page-head + *,
-.content > .toolbar + * { margin-top: 0; }
+.content > .toolbar + *,
+.content > .page-transition > .page-head + *,
+.content > .page-transition > .toolbar + * { margin-top: 0; }
 
 .page-head {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -266,6 +310,11 @@ p  { margin: 0; }
   background: var(--surface);
   border: 1px solid var(--rail);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  /* Without this, a flush-background child (a table header, a banded row)
+     paints straight into the corner and squares it off — the card's own
+     radius doesn't clip its content unless told to. */
+  overflow: hidden;
 }
 .card-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -274,25 +323,49 @@ p  { margin: 0; }
 .card-body { padding: 18px; }
 .card-body.tight { padding: 12px 18px; }
 
-a .card { transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease); }
-a:hover .card { border-color: var(--rail-strong); background: var(--surface-muted); }
+a .card { transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease), transform 220ms var(--ease-spring), box-shadow 220ms var(--ease); }
+a:hover .card { border-color: var(--rail-strong); background: var(--surface-muted); transform: translateY(-2px); box-shadow: 0 16px 32px -16px oklch(23% 0.018 55 / 0.22); }
 
-.grid { display: grid; gap: 14px; }
+.grid { display: grid; gap: 20px; }
 .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-.stat { padding: 16px 18px; }
+.stat { padding: 18px; position: relative; }
+.stat-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+.stat-icon-accent { background: var(--accent-soft); color: var(--accent-ink); }
+.stat-icon-ok     { background: var(--ok-soft);     color: var(--ok); }
+.stat-icon-warn   { background: var(--warn-soft);   color: var(--warn); }
+.stat-icon-info   { background: var(--info-soft);   color: var(--info); }
 .stat-label {
   font-size: 11px; color: var(--ink-subtle); font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.08em;
 }
 .stat-value {
-  font-family: var(--serif); font-size: 32px; font-weight: 600;
-  font-variation-settings: 'SOFT' 30, 'WONK' 1, 'opsz' 60;
-  letter-spacing: -0.02em; margin-top: 8px; line-height: 1;
+  font-family: var(--serif); font-size: 32px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em; margin-top: 6px; line-height: 1;
 }
-.stat-hint { font-size: 12.5px; color: var(--ink-muted); margin-top: 6px; }
+.stat-hint {
+  display: inline-flex; align-items: center;
+  font-size: 12px; font-weight: 600; color: var(--ink-muted);
+  background: var(--surface-muted); border-radius: var(--radius-pill);
+  padding: 2px 9px; margin-top: 10px;
+}
+/* The stat tile is a link on the dashboard; the chevron only earns its
+   place once there's somewhere to go, and it slides in rather than sitting
+   there permanently competing with the number. */
+.stat-chevron {
+  position: absolute; top: 18px; right: 18px; color: var(--ink-subtle);
+  opacity: 0; transform: translateX(-4px);
+  transition: opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
+}
+a:hover .stat-chevron { opacity: 1; transform: translateX(0); }
+@media (prefers-reduced-motion: reduce) { .stat-chevron { transition: opacity 120ms linear; transform: none; } }
 
 /* ---------------------------------------------------------------- controls */
 .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
@@ -320,27 +393,40 @@ textarea.input { resize: vertical; min-height: 84px; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
 .field label { font-size: 13px; font-weight: 600; }
 .field .hint { font-size: 12px; color: var(--ink-subtle); }
-.field .error { font-size: 12.5px; color: var(--accent-ink); font-weight: 500; }
+.field .error { font-size: 12.5px; color: var(--danger-ink); font-weight: 500; animation: bridge-in 160ms var(--ease); }
 
+/* The push system: a solid colour edge (the button's own thickness) plus a
+   soft cast shadow on the ground. Hover lifts, active presses down — the press
+   IS the feedback, so nothing here scales or overshoots. */
 .btn {
+  --btn-edge: var(--rail-strong);
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 7px 13px; border-radius: var(--radius-sm);
-  border: 1px solid var(--rail-strong); background: var(--surface);
-  font-size: 14px; font-weight: 550; cursor: pointer; white-space: nowrap;
-  transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease),
-              color var(--fast) var(--ease), transform var(--fast) var(--ease);
+  padding: 8px 15px; border-radius: var(--radius-pill);
+  border: 0; background: var(--surface); color: var(--ink);
+  font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  box-shadow: 0 3px 0 0 var(--btn-edge), 0 4px 10px -4px oklch(23% 0.018 55 / 0.18);
+  transform: translateY(0);
+  transition: background var(--fast) var(--ease), box-shadow 140ms cubic-bezier(0.2,0.7,0.3,1),
+              color var(--fast) var(--ease), transform 140ms cubic-bezier(0.2,0.7,0.3,1);
 }
-.btn:hover { background: var(--surface-muted); border-color: var(--ink-subtle); }
-.btn:active { transform: translateY(1px); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; background: var(--surface-muted); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.btn-primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
-.btn-primary:disabled { background: var(--accent); border-color: var(--accent); }
-.btn-ghost { border-color: transparent; background: transparent; }
-.btn-ghost:hover { background: var(--surface-muted); border-color: transparent; }
-.btn-danger { color: var(--accent-ink); }
-.btn-danger:hover { background: var(--accent-soft); border-color: var(--accent); }
-.btn-sm { padding: 4px 10px; font-size: 13px; }
+.btn:hover { background: var(--surface-muted); transform: translateY(-1px); box-shadow: 0 4px 0 0 var(--btn-edge), 0 8px 16px -4px oklch(23% 0.018 55 / 0.2); }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--btn-edge), 0 2px 6px -2px oklch(23% 0.018 55 / 0.18); transition-duration: 70ms; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; background: var(--surface-muted); box-shadow: 0 3px 0 0 var(--btn-edge); }
+/* Busy is a different state from merely unavailable — a form that's
+   incomplete stays flatly disabled, but a submit in flight gets a pulse so
+   "Working…" reads as active rather than as another reason it's blocked. */
+.btn[aria-busy="true"] { opacity: 0.75; animation: busy-pulse 1.1s var(--ease) infinite; }
+@keyframes busy-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 0.5; } }
+.btn-primary { --btn-edge: var(--accent-ink); background: var(--accent); color: var(--on-accent); box-shadow: 0 3px 0 0 var(--btn-edge), 0 4px 12px -3px oklch(58% 0.19 27 / 0.4); }
+.btn-primary:hover { background: var(--accent); box-shadow: 0 4px 0 0 var(--btn-edge), 0 10px 20px -4px oklch(58% 0.19 27 / 0.45); }
+.btn-primary:active { box-shadow: 0 1px 0 0 var(--btn-edge), 0 2px 8px -2px oklch(58% 0.19 27 / 0.4); }
+.btn-primary:disabled { background: var(--accent); }
+.btn-ghost { --btn-edge: transparent; background: transparent; box-shadow: none; }
+.btn-ghost:hover { background: var(--surface-muted); box-shadow: none; transform: translateY(0); }
+.btn-ghost:active { transform: translateY(1px); }
+.btn-danger { --btn-edge: transparent; color: var(--danger-ink); background: transparent; box-shadow: none; }
+.btn-danger:hover { background: var(--danger-soft); box-shadow: none; transform: translateY(0); }
+.btn-sm { padding: 5px 12px; font-size: 13px; }
 .btn svg { flex: 0 0 auto; }
 
 /* ---------------------------------------------------------------- table */
@@ -372,7 +458,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .badge-ok     { background: var(--ok-soft);     color: var(--ok);         border-color: transparent; }
 .badge-warn   { background: var(--warn-soft);   color: var(--warn);       border-color: transparent; }
 .badge-info   { background: var(--info-soft);   color: var(--info);       border-color: transparent; }
-.badge-danger { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+.badge-danger { background: var(--danger-soft); color: var(--danger-ink); border-color: transparent; }
 
 /* ---------------------------------------------------------------- progress */
 .progress { height: 6px; border-radius: 999px; background: var(--rail); overflow: hidden; min-width: 88px; flex: 1; }
@@ -412,14 +498,14 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tab:hover { color: var(--ink); border-bottom-color: var(--rail-strong); }
 .tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
 
-.empty { text-align: center; padding: 40px 20px; color: var(--ink-muted); }
+.empty { text-align: center; padding: 40px 20px; color: var(--ink-muted); animation: pop-in 220ms var(--ease); }
 .empty svg { margin-bottom: 12px; }
 .empty h3 { margin-bottom: 6px; }
 .empty p { max-width: 44ch; margin: 0 auto; }
 
 .alert {
   padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px;
-  background: var(--accent-soft); color: var(--accent-ink); margin-bottom: 16px;
+  background: var(--danger-soft); color: var(--danger-ink); margin-bottom: 16px;
 }
 .alert-ok { background: var(--ok-soft); color: var(--ok); }
 .alert-info { background: var(--info-soft); color: var(--info); }
@@ -444,22 +530,22 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 /* ---------------------------------------------------------------- login */
 .login-page { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 1fr; }
 .login-art {
-  background: #16150f; color: #f7f5ee;
+  background: var(--ink); color: var(--on-accent);
   display: flex; flex-direction: column; justify-content: space-between;
   padding: 56px; gap: 40px;
 }
 .login-art h2 {
-  font-size: 42px; line-height: 1.1; color: #fffefb;
-  font-variation-settings: 'SOFT' 40, 'WONK' 1, 'opsz' 100;
+  font-size: 42px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em;
+  color: var(--on-accent);
 }
-.login-art p { color: rgba(247, 245, 238, 0.72); max-width: 44ch; }
+.login-art p { color: color-mix(in oklch, var(--on-accent) 72%, transparent); max-width: 44ch; }
 .login-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .login-panel {
-  border: 1px solid rgba(247, 245, 238, 0.22); border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in oklch, var(--on-accent) 22%, transparent); border-radius: var(--radius);
   padding: 14px; min-height: 96px; display: flex; flex-direction: column; justify-content: space-between;
 }
-.login-panel .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(247,245,238,0.6); }
-.login-panel .v { font-family: var(--serif); font-size: 22px; color: #fffefb; }
+.login-panel .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: color-mix(in oklch, var(--on-accent) 60%, transparent); }
+.login-panel .v { font-family: var(--serif); font-weight: 700; font-size: 22px; color: var(--on-accent); }
 .login-form-wrap { display: flex; align-items: center; justify-content: center; padding: 40px; }
 .login-form { width: 100%; max-width: 356px; }
 .demo-accounts { margin-top: 24px; border-top: 1px solid var(--rail); padding-top: 14px; }
@@ -475,7 +561,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 
 /* ---------------------------------------------------------------- overlays */
 .overlay {
-  position: fixed; inset: 0; background: rgba(22, 21, 15, 0.34);
+  position: fixed; inset: 0; background: color-mix(in oklch, var(--ink) 34%, transparent);
   display: flex; z-index: 60; animation: fade var(--fast) var(--ease);
 }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
@@ -789,7 +875,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
   white-space: nowrap;
 }
 .req-due_soon { background: var(--warn-soft); color: var(--warn); }
-.req-overdue  { background: var(--accent-soft); color: var(--accent-ink); }
+.req-overdue  { background: var(--danger-soft); color: var(--danger-ink); }
 .req-done     { background: var(--ok-soft); color: var(--ok); }
 
 /* ---------------------------------------------------------------- wrong device
@@ -842,7 +928,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
   gap: 5px;
   padding: 4px 9px;
   border: 0;
-  border-radius: 4px;
+  border-radius: 8px;
   background: none;
   color: var(--ink-subtle);
   font: inherit;
@@ -858,11 +944,11 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .theme-switch-option.is-active {
   background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 1px 2px rgba(22, 21, 15, 0.10);
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--ink) 10%, transparent);
 }
 :root:not([data-theme='light']) .theme-switch-option.is-active,
 :root[data-theme='dark'] .theme-switch-option.is-active {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 2px color-mix(in oklch, black 40%, transparent);
 }
 
 /* Below the widest breakpoint the labels are the first thing to go; the icons
@@ -1030,8 +1116,50 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .request-text strong { font-size: 14px; font-weight: 600; }
 .request-text span { font-size: 12.5px; color: var(--ink-muted); }
 .request-text .req { justify-self: start; margin-top: 2px; }
-.request-note { color: var(--accent-ink) !important; }
+.request-note { color: var(--danger-ink) !important; }
 .request-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* A count that reads as a mark rather than as more heading text — its own
+   circle, tinted with the one accent the page already uses for "this needs
+   you", not a muted grey that reads as decoration rather than a number that
+   matters. */
+.count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 24px; padding: 0 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 13px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- worklist
+   A queue reads better as rows than as a data grid: no header labels, no cell
+   borders — a hairline between items and a wider gap between groups is
+   enough structure for one to five things waiting on somebody. */
+.worklist-list { display: flex; flex-direction: column; gap: 28px; }
+
+.worklist-rows {
+  display: flex; flex-direction: column;
+  margin: 0 -18px; /* bleeds the row hover tint to the card's own edges */
+}
+.worklist-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 18px;
+  border-top: 1px solid var(--rail);
+  transition: background var(--fast) var(--ease);
+}
+.worklist-row:first-child { border-top: 0; }
+.worklist-row:hover { background: var(--surface-muted); }
+.worklist-row-what { flex: 1; min-width: 0; }
+.worklist-row .person { flex: 0 0 auto; width: 200px; min-width: 0; }
+.worklist-row .checkbox { flex: 0 0 auto; }
+.worklist-row .req { flex: 0 0 auto; }
+.worklist-row .btn { flex: 0 0 auto; }
+@media (max-width: 720px) {
+  .worklist-row { flex-wrap: wrap; }
+  .worklist-row .person { width: auto; flex: 1 1 auto; }
+}
 
 /* ---------------------------------------------------------------- checklists */
 .checklist-items { display: grid; gap: 10px; }
@@ -1132,7 +1260,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
   background: var(--ok-soft);
   color: var(--ok);
 }
-.toast-error .toast-mark { background: var(--accent-soft); color: var(--accent-ink); }
+.toast-error .toast-mark { background: var(--danger-soft); color: var(--danger-ink); }
 .toast-info  .toast-mark { background: var(--info-soft); color: var(--info); }
 
 .toast-message { flex: 1; min-width: 0; }
@@ -1201,10 +1329,6 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
   transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
 
-/* Navigation marks the current page by moving, not by repainting: the active
-   rail slides between items so the change of place is legible. */
-.nav-item { transition: background var(--fast) var(--ease), color var(--fast) var(--ease); }
-
 /* Progress bars already grow on arrival through the `fill` keyframe, which
    scales rather than resizing. Transitioning `width` here would animate a
    layout property on every value change and thrash the row it sits in. */
@@ -1255,10 +1379,11 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 }
 
 /* A line of context under a worklist heading: why this group is worth the
-   attention it is asking for. */
+   attention it is asking for. Sits directly in the card's own (tight)
+   padding now, so it carries no horizontal inset of its own. */
 .worklist-blurb {
   margin: 0;
-  padding: 0 18px 12px;
+  padding: 0 0 12px;
   color: var(--ink-muted);
   font-size: 12.5px;
   line-height: 1.5;

@@ -43,7 +43,7 @@ export function VerificationQueue({ rows }: { rows: AwaitingVerification[] }) {
           ) : null}
           <button
             className="btn btn-sm btn-primary"
-            disabled={busy || selected.size === 0}
+            disabled={busy || selected.size === 0} aria-busy={busy}
             onClick={() => call(
               () => verifyAssignmentsAction([...selected]),
               () => setSelected(new Set()),

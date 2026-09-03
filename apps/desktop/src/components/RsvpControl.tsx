@@ -14,7 +14,7 @@ export function RsvpControl({ eventId, response }: { eventId: string; response: 
         {OPTIONS.map((o) => (
           <button
             key={o} className={`btn btn-sm${response === o ? ' btn-primary' : ''}`}
-            disabled={busy} onClick={() => call(() => rsvpAction(eventId, o))}
+            disabled={busy} aria-busy={busy} onClick={() => call(() => rsvpAction(eventId, o))}
           >
             {o}
           </button>

@@ -65,7 +65,7 @@ export function RecordBreach() {
           {error ? <div className="alert" role="alert">{error}</div> : null}
           <div className="row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
             <button
-              className="btn btn-primary" disabled={busy || !summary.trim()}
+              className="btn btn-primary" disabled={busy || !summary.trim()} aria-busy={busy}
               onClick={() => call(
                 () => recordBreachAction({ summary, information, suspectedAt }),
                 () => setOpen(false),
@@ -109,7 +109,7 @@ export function BreachActions({ breach }: { breach: Breach }) {
             {error ? <div className="alert" role="alert">{error}</div> : null}
             <div className="row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
               <button
-                className="btn btn-primary" disabled={busy || !note.trim()}
+                className="btn btn-primary" disabled={busy || !note.trim()} aria-busy={busy}
                 onClick={() => call(
                   () => assessBreachAction({
                     id: breach.id, decision, note,
@@ -133,7 +133,7 @@ export function BreachActions({ breach }: { breach: Breach }) {
     <div className="row" style={{ justifyContent: 'flex-end' }}>
       {!breach.oaic_notified_at ? (
         <button
-          className="btn btn-sm" disabled={busy}
+          className="btn btn-sm" disabled={busy} aria-busy={busy}
           onClick={() => call(() => recordBreachNotificationAction({ id: breach.id, oaic: true }))}
         >
           OAIC told
@@ -141,7 +141,7 @@ export function BreachActions({ breach }: { breach: Breach }) {
       ) : null}
       {!breach.individuals_notified_at ? (
         <button
-          className="btn btn-sm" disabled={busy}
+          className="btn btn-sm" disabled={busy} aria-busy={busy}
           onClick={() => call(() => recordBreachNotificationAction({ id: breach.id, individuals: true }))}
         >
           People told

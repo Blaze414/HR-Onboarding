@@ -199,14 +199,14 @@ function RequiredChip({ state, label }: { state: string; label: string }) {
     : state === 'done' ? { bg: colors.okSoft, fg: colors.ok }
     : { bg: colors.infoSoft, fg: colors.info };
   return (
-    <View style={{ backgroundColor: tone.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill }}>
+    <View style={{ backgroundColor: tone.bg, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill }}>
       <Text style={{ color: tone.fg, fontSize: 11, fontWeight: '600' }}>{label || 'Required'}</Text>
     </View>
   );
 }
 
 const makeStyles = (colors: Colors) => StyleSheet.create({
-  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: 2 },
+  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.xs },
   greetRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   bell: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
   bellPressed: { backgroundColor: colors.surfaceMuted },

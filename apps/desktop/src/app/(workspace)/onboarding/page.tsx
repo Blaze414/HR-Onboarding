@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-  EMPTY_STATES, employeeService, formatDate, formatRelativeDay, onboardingService,
+  relativeDueLabel, EMPTY_STATES, employeeService, formatDate, onboardingService,
 } from '@snoopy/shared';
 import { StartOnboarding } from '@/components/StartOnboarding';
 import { StepToggle } from '@/components/StepToggle';
@@ -32,7 +32,7 @@ export default async function OnboardingPage() {
       <>
         <PageHead
           title="My onboarding"
-          subtitle={`${done} of ${plan.steps?.length ?? 0} steps complete · target ${formatRelativeDay(plan.target_completion_date)}`}
+          subtitle={`${done} of ${plan.steps?.length ?? 0} steps complete · target ${relativeDueLabel(plan.target_completion_date, plan.status === 'Completed')}`}
         />
         <div className="grid grid-2" style={{ marginBottom: 18 }}>
           <Card title="Progress">
@@ -91,7 +91,7 @@ export default async function OnboardingPage() {
                 <td><ProgressBar value={p.progress} /></td>
                 <td><StatusBadge status={p.status} /></td>
                 <td className="subtle nowrap">{formatDate(p.start_date)}</td>
-                <td className="subtle nowrap">{formatRelativeDay(p.target_completion_date)}</td>
+                <td className="subtle nowrap">{relativeDueLabel(p.target_completion_date, p.status === 'Completed')}</td>
               </tr>
             ))}
             {plans.length === 0 ? (

@@ -24,7 +24,7 @@ export function ReassignTasks({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy || !to}
+                className="btn btn-primary" disabled={busy || !to} aria-busy={busy}
                 onClick={() => {
                   if (!to) { setError('Choose who picks this up.'); return; }
                   call(() => reassignTasksAction(employeeId, to), () => setOpen(false));

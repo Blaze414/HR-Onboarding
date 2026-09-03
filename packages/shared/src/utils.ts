@@ -1,5 +1,20 @@
 import type { StepStatus, TaskStatus } from './types';
 
+/**
+ * Pinned rather than `undefined` (the runtime's own locale) everywhere a date
+ * is formatted. `undefined` resolves to whatever locale the *current*
+ * JavaScript engine defaults to — the server's Node process locale during SSR,
+ * the visitor's browser locale during hydration. Those two disagreeing is
+ * exactly the classic Next.js hydration-mismatch source ("Date formatting in
+ * a user's locale which doesn't match the server"): identical UTC instant,
+ * two different rendered strings, React throws away the server-rendered tree
+ * and regenerates it client-side. Pinning one locale means server and client
+ * agree regardless of what either machine's own locale is set to. This is an
+ * Australian-employment-law app, so `en-AU` is also just correct for the
+ * audience — not merely a fix for the mismatch.
+ */
+export const LOCALE = 'en-AU';
+
 export function greeting(date = new Date()): string {
   const h = date.getHours();
   if (h < 12) return 'Good morning';
@@ -22,14 +37,14 @@ export function initials(name: string): string {
 
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
-  return new Date(value).toLocaleDateString(undefined, {
+  return new Date(value).toLocaleDateString(LOCALE, {
     day: 'numeric', month: 'short', year: 'numeric',
   });
 }
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—';
-  return new Date(value).toLocaleString(undefined, {
+  return new Date(value).toLocaleString(LOCALE, {
     day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
   });
 }
@@ -47,6 +62,17 @@ export function formatRelativeDay(value: string | null | undefined): string {
   if (days === -1) return '1 day overdue';
   if (days < 0) return `${Math.abs(days)} days overdue`;
   return `Due in ${days} days`;
+}
+
+/**
+ * Same phrasing as `formatRelativeDay`, except a finished item never reads as
+ * "overdue" — that word describes work still owed, and a completed task
+ * finished on some day, on time or not. Without this, every table showing a
+ * Due column next to a Status column tells a manager their team routinely
+ * blows deadlines, when the work is actually done.
+ */
+export function relativeDueLabel(value: string | null | undefined, isDone: boolean): string {
+  return isDone ? 'Completed' : formatRelativeDay(value);
 }
 
 export function isOverdue(dueDate: string | null, status: TaskStatus | StepStatus): boolean {
@@ -153,5 +179,5 @@ export function formatRelativeTime(value: string | null | undefined): string {
   if (days <= 0) return 'today';
   if (days === 1) return 'yesterday';
   if (days < 7) return `${days} days ago`;
-  return `on ${then.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  return `on ${then.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short', year: 'numeric' })}`;
 }

@@ -157,7 +157,7 @@ function AddCredential({
       footer={
         <>
           <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" disabled={busy} onClick={submit}>
+          <button className="btn btn-primary" disabled={busy} aria-busy={busy} onClick={submit}>
             {busy ? 'Adding…' : 'Add certification'}
           </button>
         </>

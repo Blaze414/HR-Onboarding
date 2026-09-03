@@ -72,6 +72,7 @@ export function ActionButton({
       <button
         className={`btn${small ? ' btn-sm' : ''}${variant ? ` btn-${variant}` : ''}`}
         disabled={busy}
+        aria-busy={busy}
         onClick={() => {
           if (confirm && !window.confirm(confirm)) return;
           call(action);

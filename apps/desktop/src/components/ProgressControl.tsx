@@ -22,7 +22,7 @@ export function ProgressControl({
         {[0, 25, 50, 75, 100].map((step) => (
           <button
             key={step} className={`btn btn-sm${value === step ? ' btn-primary' : ''}`}
-            disabled={busy} onClick={() => save(step)}
+            disabled={busy} aria-busy={busy} onClick={() => save(step)}
           >
             {step}%
           </button>

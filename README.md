@@ -653,6 +653,58 @@ nothing behind the paths to find. The storage policy now mirrors the row policy
 clause for clause — `shared/` to the workspace, `{owner}/` to that person,
 their manager, or an administrator.
 
+### Two bugs the real documents exposed
+
+**The viewer's runtime was never being served.** Middleware matched every path
+except `_next/static`, images and fonts — so `/file-viewer/vendor/pdf/pdf.worker.mjs`
+got a `307` to the sign-in page, and pdf.js parsed the redirect body as
+JavaScript: *"Setting up fake worker failed: Invalid or unexpected token"*. The
+unexpected token was the `<` of an HTML page. Nothing under `file-viewer/` is
+user data — it is the same bytes for everybody, regenerated from the package on
+install — so it is excluded from the matcher.
+
+The fix took two goes, and the first one is worth recording: splitting the
+matcher across two lines with a `+` left it **unset**, because Next reads
+`config.matcher` by static analysis at build time and cannot evaluate an
+expression. The middleware then ran on everything, which is precisely the bug
+being fixed, silently restored. It is one string literal now, with a comment
+saying why.
+
+**A dead session cookie retried forever.** Resetting the database under a
+signed-in browser leaves a cookie whose refresh token no longer exists. Every
+request tried to refresh it, failed with `refresh_token_not_found`, and logged
+it — endlessly, because nothing ever threw the cookie away. The middleware now
+treats a failed refresh as signed out and clears the cookies once, so the next
+request is an ordinary anonymous one. Verified by signing in, resetting the
+database underneath, and using the cookie: one redirect, `Max-Age=0` on the way
+out, and zero errors in the log.
+
+### The unread badge that never cleared
+
+*"Mark all as read" appeared to do nothing.* The write was fine — the database
+went from nineteen unread to zero — and it was not a development-server
+artefact either. It was this line:
+
+```js
+const unreadNow = items.filter((n) => !n.read_at).length || unread;
+```
+
+After marking everything read that filter is **0**, and `0 || unread` falls back
+to the server's old count. Falsy zero: the one number the badge most needed to
+show was the one value the expression treated as absent.
+
+The panel holds the twenty most recent notifications while the badge counts
+every unread one, so the two genuinely cannot be derived from each other —
+which is what the fallback was for. The count is now *adjusted* rather than
+recomputed: what has been read here since the server last spoke, and a flag for
+"all of it", both reset when fresh props arrive.
+
+A second cause sat behind it. The badge is drawn by the workspace **layout**,
+and the action revalidated nothing, so even a correct count would have been
+served from before the write. Notification actions now revalidate the layout,
+and the layout is `force-dynamic` — it renders a person's name, role and unread
+count, none of which may be cached across requests.
+
 ### Issuing pay slips
 
 Two things were wrong with issuing them one at a time.

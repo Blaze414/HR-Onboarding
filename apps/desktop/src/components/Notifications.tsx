@@ -16,11 +16,28 @@ import { Icon } from './Icon';
 export function Notifications({ initial, unread }: { initial: AppNotification[]; unread: number }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(initial);
+  /*
+   * What has been read here, since the server last told us the total.
+   *
+   * The panel holds the twenty most recent notifications and the badge counts
+   * every unread one, so the two cannot be derived from each other — which is
+   * why the count is adjusted rather than recomputed. Tracked separately from
+   * `items` so that marking everything read produces zero: the previous version
+   * wrote `items.filter(unread).length || unread`, and after "mark all read"
+   * that is `0 || unread`, which is the old number. The badge never cleared.
+   */
+  const [readHere, setReadHere] = useState(0);
+  const [clearedAll, setClearedAll] = useState(false);
   const [, startTransition] = useTransition();
   const router = useRouter();
   const panel = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setItems(initial); }, [initial]);
+  // The server has caught up: its numbers are the truth again.
+  useEffect(() => {
+    setItems(initial);
+    setReadHere(0);
+    setClearedAll(false);
+  }, [initial, unread]);
 
   // Close on outside click and on Escape — a panel that traps you is worse than
   // no panel.
@@ -38,17 +55,21 @@ export function Notifications({ initial, unread }: { initial: AppNotification[];
     };
   }, [open]);
 
-  const unreadNow = items.filter((n) => !n.read_at).length || unread;
+  const unreadNow = clearedAll ? 0 : Math.max(0, unread - readHere);
 
   function markRead(id: string) {
     // Optimistic: the row settles immediately, the server catches up.
     setItems((list) => list.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)));
+    // Only count it if it was actually unread — clicking a read one twice must
+    // not drive the badge below where it should be.
+    if (!items.find((n) => n.id === id)?.read_at) setReadHere((n) => n + 1);
     startTransition(() => { void markNotificationReadAction(id).then(() => router.refresh()); });
   }
 
   function markAll() {
     const now = new Date().toISOString();
     setItems((list) => list.map((n) => (n.read_at ? n : { ...n, read_at: now })));
+    setClearedAll(true);
     startTransition(() => { void markAllNotificationsReadAction().then(() => router.refresh()); });
   }
 

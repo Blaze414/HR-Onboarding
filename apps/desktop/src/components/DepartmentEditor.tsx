@@ -29,7 +29,7 @@ export function DepartmentEditor({
             <>
               {department ? (
                 <button
-                  className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy}
+                  className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy} aria-busy={busy}
                   onClick={() => {
                     if (!window.confirm('Delete this department? Employees keep their records but lose the grouping.')) return;
                     call(() => deleteDepartmentAction(department.id), () => setOpen(false));
@@ -40,7 +40,7 @@ export function DepartmentEditor({
               ) : null}
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (name.trim().length < 2) { setError('Department name is required.'); return; }
                   call(

@@ -1,18 +1,18 @@
 /**
- * Mascot marks are drawn locally as SVG — the app never depends on remote
- * image URLs, and nothing here is a copied asset.
+ * Own mascot, own art — a companion-pup mark generated for this brand, cropped
+ * to a circular badge served from `/public/mascot-mark.png`. Not the SVG the
+ * app used to draw locally, and not anyone else's character either.
  */
 export function SnoopyMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="Snoopy Workplace">
-      <circle cx="32" cy="32" r="31" fill="#191818" />
-      <ellipse cx="32" cy="30" rx="17" ry="15" fill="#ffffff" />
-      <ellipse cx="32" cy="42" rx="10" ry="9" fill="#ffffff" />
-      <ellipse cx="16" cy="30" rx="7" ry="11" fill="#191818" transform="rotate(-16 16 30)" />
-      <circle cx="27" cy="28" r="2.4" fill="#191818" />
-      <ellipse cx="32" cy="39" rx="4" ry="3.2" fill="#191818" />
-      <path d="M32 42 v4" stroke="#191818" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element -- fixed local asset, not a remote/optimizable one
+    <img
+      src="/mascot-mark.png"
+      width={size}
+      height={size}
+      alt="Snoopy Workplace"
+      style={{ borderRadius: '50%', display: 'block' }}
+    />
   );
 }
 

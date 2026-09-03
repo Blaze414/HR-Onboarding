@@ -1,6 +1,6 @@
 'use client';
 
-import { organisationService, type SmallBusinessTest as Test } from '@snoopy/shared';
+import { LOCALE, organisationService, type SmallBusinessTest as Test } from '@snoopy/shared';
 import { useState } from 'react';
 import { saveSmallBusinessAnswersAction } from '@/lib/actions';
 import { Field, useAction } from './Interactive';
@@ -129,7 +129,7 @@ export function SmallBusinessTest({ test, canEdit }: { test: Test; canEdit: bool
 
           <div className="row">
             <button
-              className="btn btn-sm btn-primary" disabled={busy}
+              className="btn btn-sm btn-primary" disabled={busy} aria-busy={busy}
               onClick={() => call(() => saveSmallBusinessAnswersAction({
                 associatedHeadcount: Number(associated || 0),
                 regularCasuals: Number(regular || 0),
@@ -145,7 +145,7 @@ export function SmallBusinessTest({ test, canEdit }: { test: Test; canEdit: bool
 
       {test.reviewed_at ? (
         <p className="subtle">
-          Last reviewed {new Date(test.reviewed_at).toLocaleDateString()}
+          Last reviewed {new Date(test.reviewed_at).toLocaleDateString(LOCALE)}
           {test.reviewed_by_name ? ` by ${test.reviewed_by_name}` : ''}.
         </p>
       ) : (

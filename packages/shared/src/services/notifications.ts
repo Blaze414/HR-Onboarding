@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AppNotification } from '../types';
+import { LOCALE } from '../utils';
 
 /**
  * Notifications are written by database triggers, never by a client, so this
@@ -71,7 +72,7 @@ export function timeAgo(iso: string, now = new Date()): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d`;
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  return new Date(iso).toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' });
 }
 
 /**
@@ -96,7 +97,7 @@ export function dueState(
 export function dueLabel(assignment: { due_date: string | null }, state: DueState): string {
   if (!assignment.due_date || state === 'none') return '';
   const due = new Date(`${assignment.due_date}T00:00:00`);
-  const date = due.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  const date = due.toLocaleDateString(LOCALE, { day: 'numeric', month: 'short' });
   if (state === 'overdue') return `Overdue since ${date}`;
   if (state === 'done') return `Completed`;
   return `Due ${date}`;

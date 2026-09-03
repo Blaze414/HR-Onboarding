@@ -34,10 +34,20 @@ export interface ActionResult {
  * UI, RLS would still reject the write — this is the layer that turns that
  * rejection into a message a person can read.
  */
-async function run(fn: () => Promise<string | void>, paths: string[]): Promise<ActionResult> {
+async function run(
+  fn: () => Promise<string | void>,
+  paths: string[],
+  options: { layout?: boolean } = {},
+): Promise<ActionResult> {
   try {
     const id = await fn();
     paths.forEach((p) => revalidatePath(p));
+    /*
+     * Some things are drawn by the layout rather than by a page — the unread
+     * badge, the person's own name and role. Revalidating a path leaves those
+     * untouched, so an action that changes one has to say so.
+     */
+    if (options.layout) revalidatePath('/', 'layout');
     return { ok: true, id: typeof id === 'string' ? id : undefined };
   } catch (error) {
     return { ok: false, error: friendlyError(error) };
@@ -535,13 +545,19 @@ export async function markNotificationReadAction(id: string): Promise<ActionResu
   const db = await getServerSupabase();
   // No ownership check here on purpose: RLS restricts the update to the
   // caller's own rows, so a forged id simply matches nothing.
-  return run(() => notificationService.markRead(db, id), []);
+  return run(
+    () => notificationService.markRead(db, id),
+    // The unread badge lives in the workspace layout, not on any page, so a
+    // page-level revalidation leaves it showing the old number.
+    [],
+    { layout: true },
+  );
 }
 
 export async function markAllNotificationsReadAction(): Promise<ActionResult> {
   const session = await requireSession();
   const db = await getServerSupabase();
-  return run(() => notificationService.markAllRead(db, session.userId), []);
+  return run(() => notificationService.markAllRead(db, session.userId), [], { layout: true });
 }
 
 // ---------------------------------------------------------------- acknowledgements

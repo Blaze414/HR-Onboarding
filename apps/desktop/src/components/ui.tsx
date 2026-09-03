@@ -1,18 +1,42 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { initials, formatRelativeTime } from '@snoopy/shared';
+import { initials, formatRelativeTime, LOCALE } from '@snoopy/shared';
+import { Icon, type IconName } from './Icon';
 
+/**
+ * A stat tile with its own icon, so four numbers in a row read as four
+ * distinct facts rather than four instances of the same shape. `icon` and
+ * `tone` are both optional — every existing call site keeps rendering the
+ * plain version; only the dashboard opts into the fuller one.
+ */
 export function StatCard({
-  label, value, hint, href,
-}: { label: string; value: ReactNode; hint?: string; href?: string }) {
+  label, value, hint, href, icon, tone = 'accent',
+}: {
+  label: string; value: ReactNode; hint?: string; href?: string;
+  icon?: IconName; tone?: 'accent' | 'ok' | 'warn' | 'info';
+}) {
   const body = (
     <div className="card stat">
+      {icon ? (
+        <span className={`stat-icon stat-icon-${tone}`} aria-hidden>
+          <Icon name={icon} size={18} />
+        </span>
+      ) : null}
+      {href ? <Icon name="chevronRight" size={16} className="stat-chevron" /> : null}
       <div className="stat-label">{label}</div>
       <div className="stat-value">{value}</div>
       {hint ? <div className="stat-hint">{hint}</div> : null}
     </div>
   );
-  return href ? <Link href={href}>{body}</Link> : body;
+  /* Without this, the accessible name is the block text nodes run together
+     with no separator ("Employees5") — a screen reader shouldn't have to
+     guess where the label ends and the number starts. Only buildable when
+     value/hint are plain text; a JSX value (none of the current call sites
+     pass one) falls back to the browser's default concatenation. */
+  const spoken = typeof value === 'string' || typeof value === 'number'
+    ? `${label}: ${value}${hint ? `, ${hint}` : ''}`
+    : undefined;
+  return href ? <Link href={href} aria-label={spoken}>{body}</Link> : body;
 }
 
 const TONE: Record<string, string> = {
@@ -113,7 +137,7 @@ export function EmptyState({ title, message }: { title?: string; message: string
 
 export function Card({
   title, action, children, tight = false,
-}: { title?: string; action?: ReactNode; children: ReactNode; tight?: boolean }) {
+}: { title?: ReactNode; action?: ReactNode; children: ReactNode; tight?: boolean }) {
   return (
     <section className="card">
       {title || action ? (
@@ -200,7 +224,7 @@ export function ApprovedStamp({
   if (!at) return null;
   const when = new Date(at);
   return (
-    <span className="stamp" title={when.toLocaleString()}>
+    <span className="stamp" title={when.toLocaleString(LOCALE)}>
       {verb} {formatRelativeTime(at)}
       {by ? ` by ${by}` : ''}
     </span>

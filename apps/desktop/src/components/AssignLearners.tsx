@@ -37,7 +37,7 @@ export function AssignLearners({
             <>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy || (selected.length === 0 && !departmentId)}
+                className="btn btn-primary" disabled={busy || (selected.length === 0 && !departmentId)} aria-busy={busy}
                 onClick={() => call(
                   () => (departmentId
                     // A whole department is assigned by name rather than by

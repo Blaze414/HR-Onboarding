@@ -3,7 +3,7 @@ import {
   credentialService,
   notificationService,
   activityService, analyticsService, dashboardService, EMPTY_STATES,
-  formatDateTime, formatRelativeDay, greeting, firstName,
+  relativeDueLabel, formatDateTime, formatRelativeDay, greeting, firstName,
 } from '@snoopy/shared';
 import {
   BarChart, Card, EmptyState, PageHead, Person, ProgressBar, StatCard, StatusBadge, TableCard,
@@ -29,7 +29,7 @@ export default async function DashboardPage({
   const hello = `${greeting()}, ${firstName(session.profile.name)}`;
 
   if (session.profile.role === 'admin') {
-    const [counts, org, departments, employeeProgress, coursePerf, activity, plans] = await Promise.all([
+    const [counts, org, departments, employeeProgress, coursePerf, activity, plans, orgRow] = await Promise.all([
       dashboardService.loadAdminCounts(db),
       analyticsService.getOrganisationProgress(db),
       analyticsService.listDepartmentProgress(db),
@@ -39,6 +39,10 @@ export default async function DashboardPage({
       db.from('employee_onboarding')
         .select('*, employee:profiles!employee_onboarding_employee_id_fkey(id,name)')
         .neq('status', 'Completed').order('target_completion_date'),
+      // Same lookup settings/page.tsx already does. An admin landing here has
+      // no other cue which organisation they're inside — this is the one
+      // screen everybody hits first, so it's the one place that matters most.
+      db.from('organisations').select('name').eq('id', session.organisationId).maybeSingle(),
     ]);
 
     const attention = analyticsService.deriveAttention(employeeProgress).slice(0, 5);
@@ -51,13 +55,13 @@ export default async function DashboardPage({
           </div>
         ) : null}
 
-        <PageHead title={hello} subtitle={`${session.profile.organisation_id ? '' : ''}Organisation overview`} />
+        <PageHead title={hello} subtitle={orgRow.data?.name ? `${orgRow.data.name} · Organisation overview` : 'Organisation overview'} />
 
         <div className="grid grid-4">
-          <StatCard label="Employees" value={counts.employees} href="/employees" />
-          <StatCard label="Courses" value={counts.courses} href="/courses" />
-          <StatCard label="Open tasks" value={counts.openTasks} href="/tasks" />
-          <StatCard label="Active onboarding" value={counts.activeOnboarding} href="/onboarding" />
+          <StatCard label="Employees" value={counts.employees} href="/employees" icon="employees" tone="accent" />
+          <StatCard label="Courses" value={counts.courses} href="/courses" icon="course" tone="info" />
+          <StatCard label="Open tasks" value={counts.openTasks} href="/tasks" icon="task" tone="warn" />
+          <StatCard label="Active onboarding" value={counts.activeOnboarding} href="/onboarding" icon="onboarding" tone="ok" />
         </div>
 
         <div className="grid grid-2">
@@ -172,14 +176,16 @@ export default async function DashboardPage({
         */}
       {sessionCan(session, 'report.view_summary') ? (
         <div className="grid grid-4">
-          <StatCard label="Courses" value={data.totalCourses} hint={`${data.completedCourses} completed`} href="/courses" />
-          <StatCard label="Outstanding tasks" value={data.outstandingTasks} hint={`${data.overdueTasks} overdue`} href="/tasks" />
-          <StatCard label="Upcoming events" value={data.upcomingEvents.length} href="/events" />
+          <StatCard label="Courses" value={data.totalCourses} hint={`${data.completedCourses} completed`} href="/courses" icon="course" tone="info" />
+          <StatCard label="Outstanding tasks" value={data.outstandingTasks} hint={`${data.overdueTasks} overdue`} href="/tasks" icon="task" tone="warn" />
+          <StatCard label="Upcoming events" value={data.upcomingEvents.length} href="/events" icon="event" tone="accent" />
           <StatCard
             label="Onboarding"
             value={data.onboarding ? `${data.onboarding.progress}%` : '—'}
             hint={data.onboarding?.status ?? 'No plan assigned'}
             href="/onboarding"
+            icon="onboarding"
+            tone="ok"
           />
         </div>
       ) : null}
@@ -243,7 +249,7 @@ export default async function DashboardPage({
             <div className="stack">
               <ProgressBar value={data.onboarding.progress} />
               <p className="subtle">
-                {data.onboarding.status} · target {formatRelativeDay(data.onboarding.target_completion_date)}
+                {data.onboarding.status} · target {relativeDueLabel(data.onboarding.target_completion_date, data.onboarding.status === 'Completed')}
               </p>
             </div>
           ) : (

@@ -36,8 +36,20 @@ export const getSession = cache(async function getSession(): Promise<Session | n
   // the signature and applies RLS before returning a row. A forged or expired
   // token therefore yields no profile, and this function returns null — the same
   // outcome as an auth-service round trip, without paying for one on every page.
-  const { data: { session } } = await db.auth.getSession();
-  const user = session?.user;
+  /*
+   * Also the place a dead refresh token surfaces — a cookie whose session no
+   * longer exists, most easily produced by resetting the database under a
+   * signed-in browser. It is not an error worth raising at somebody: it means
+   * signed out, and the middleware clears the cookie on the way past.
+   */
+  let user;
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error) return null;
+    user = data.session?.user;
+  } catch {
+    return null;
+  }
   if (!user) return null;
 
   // A rejected token surfaces here as a failed profile load. Treat it as signed

@@ -47,7 +47,7 @@ export function CredentialReview({ credential }: { credential: EmployeeCredentia
           footer={
             <>
               <button
-                className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy}
+                className="btn btn-danger" style={{ marginRight: 'auto' }} disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (!note.trim()) { setError('Say why it was not accepted.'); return; }
                   call(
@@ -61,7 +61,7 @@ export function CredentialReview({ credential }: { credential: EmployeeCredentia
               </button>
               <button className="btn" onClick={() => setOpen(false)}>Cancel</button>
               <button
-                className="btn btn-primary" disabled={busy}
+                className="btn btn-primary" disabled={busy} aria-busy={busy}
                 onClick={() => {
                   if (!method) { setError('Record how you checked it.'); return; }
                   call(

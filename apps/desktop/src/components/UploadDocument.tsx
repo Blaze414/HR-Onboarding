@@ -72,7 +72,7 @@ export function UploadDocument({
           footer={
             <>
               <button className="btn" onClick={() => { setOpen(false); reset(); }}>Cancel</button>
-              <button className="btn btn-primary" onClick={upload} disabled={busy || done}>
+              <button className="btn btn-primary" onClick={upload} disabled={busy || done} aria-busy={busy}>
                 {done ? 'Uploaded' : busy ? 'Uploading…' : 'Upload'}
               </button>
             </>
